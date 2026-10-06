@@ -1,6 +1,5 @@
 # --- privado / só no PC
 rio_itapocu/config.local.json
-rio_itapocu/fontes_ciram.py
 # scripts do Windows (caminhos e usuário do PC)
 rio_itapocu/servidor.py
 rio_itapocu/vigia.*

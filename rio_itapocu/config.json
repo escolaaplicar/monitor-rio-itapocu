@@ -23,13 +23,19 @@
         "fonte": "cemaden",
         "id": 6925,
         "nome": "CEMADEN Corupá - João Tozini (confluência)",
-        "peso": 0.55
+        "peso": 0.35
+      },
+      {
+        "fonte": "ciram",
+        "id": 2399,
+        "nome": "Epagri/CIRAM Corupá - Guarajuva (vale do Rio Novo)",
+        "peso": 0.35
       },
       {
         "fonte": "ana",
         "id": "82336000",
         "nome": "ANA 82336000 Rio Humboldt (Rabo do Macaco)",
-        "peso": 0.45
+        "peso": 0.3
       }
     ],
     "pontos_previsao": [

@@ -32,8 +32,7 @@ def hora_cheia(t):
 
 
 # --------------------------------------------------------------------------- Epagri/CIRAM (opcional)
-# A leitura da estação da Epagri fica em fontes_ciram.py, que não vai para o repositório público
-# (o AgroConnect embaralha as respostas; uso público depende de autorização da Epagri).
+# A leitura da estação da Epagri fica em fontes_ciram.py.
 try:
     from fontes_ciram import ciram_horario, ciram_mapa  # noqa: F401
     CIRAM_DISPONIVEL = True
