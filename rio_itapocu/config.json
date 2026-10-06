@@ -64,7 +64,8 @@
     "fator_previsao": 1.0,
     "corrigir_vies_previsao": true,
     "horas_vies_previsao": 12,
-    "tau_vies_previsao_h": 18
+    "tau_vies_previsao_h": 18,
+    "fator_pessimista": 1.0
   },
   "hbv": {
     "fc": 265.20025,
@@ -115,5 +116,11 @@
   "regua": {
     "chave": "corupa",
     "nome": "Régua SAMAE/Defesa Civil - Ponte Corupá (Rua Roberto Seidel)"
+  },
+  "verificacao": {
+    "min_verificacoes": 12,
+    "quantil_pior_caso": 0.9,
+    "janela_h": 72,
+    "folga_min_m": 0.05
   }
 }

@@ -31,6 +31,30 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;b
 .aviso{font-size:12.5px;color:var(--mut)}a{color:var(--azul)}
 .fontes h3{font-size:14.5px;margin:16px 0 6px}.fontes ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.55}
 .fontes td,.fontes th{font-size:12.5px}
+/* ---------- celular ---------- */
+@media (max-width:600px){
+ body{font-size:14px}
+ main{padding:10px}
+ h1{font-size:16.5px;line-height:1.3}
+ h2{font-size:14.5px;margin:18px 0 6px}
+ .banner{padding:12px 14px;gap:6px;margin:10px 0}
+ .banner b.n{font-size:22px}.banner .det{font-size:14px;line-height:1.45}
+ .cruz span{font-size:12px;padding:2px 8px}
+ .grid{grid-template-columns:1fr 1fr;gap:8px}
+ .card{padding:10px 11px;border-radius:10px}
+ .k{font-size:10.5px}.v{font-size:21px}.v small{font-size:12px}.d{font-size:11.5px}
+ .ctl{gap:8px;margin:10px 0}.ctl label{width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px}
+ .ctl button{width:100%;padding:9px}
+ select{padding:7px 8px;font-size:15px}
+ .ch{height:300px}.ch.s{height:230px}
+ #trKpis{grid-template-columns:1fr!important}
+ .fontes table,.fontes tbody,.fontes tr,.fontes td{display:block;width:100%}
+ .fontes tr:first-child{display:none}
+ .fontes tr{border-bottom:1px solid var(--bd);padding:8px 0}
+ .fontes td{border:0;padding:2px 0}
+ .fontes ul{padding-left:16px;font-size:13px}
+ table{font-size:12px}
+}
 </style>
 </head>
 <body><main>
@@ -183,7 +207,7 @@ function render(){
    <div class="det">Agora (${P.gerado_em.slice(11,16)}): régua da Ponte Corupá em <b>${fmt(a.regua_atual,2)} m</b> (${ROT[a.nivel_atual]}), ${tendTxt}<br>
    Daqui 1 hora (${a.hora_1h.slice(11,16)}): previsão de <b>${fmt(a.regua_media_1h,2)} m</b>; no pior caso, <b>${fmt(a.regua_pior_1h,2)} m</b> (${ROT[ORD.reduce((n,k)=>a.regua_pior_1h>=(k==='normal'?-1:al[k])?k:n,'normal')]})
    <div class="cruz"><span>Atenção ${fmt(al.atencao,1)} m</span><span>Alerta ${fmt(al.alerta,1)} m</span><span>Alerta máximo ${fmt(al.transbordamento,1)} m</span></div>
-   <div style="font-size:12.5px;margin-top:6px;opacity:.9">O status considera o nível agora e o pior caso para a próxima 1 hora. A previsão para as horas seguintes, com mais incerteza, aparece no gráfico abaixo.</div></div>`;
+   <div style="font-size:12.5px;margin-top:6px;opacity:.9">Pior caso: ${a.pior_1h_fonte||''}.${P.verificacao_1h?` Acerto das previsões de 1 h: erro médio de ${fmt(P.verificacao_1h.erro_medio_cm,0)} cm em ${P.verificacao_1h.n} conferências; o pior caso cobriu ${P.verificacao_1h.pior_cobriu_pct}% delas.`:''}<br>O status considera o nível agora e o pior caso para a próxima 1 hora. A previsão para as horas seguintes, com mais incerteza, aparece no gráfico abaixo.</div></div>`;
   if(ultimoNivel && pior!==ultimoNivel && ORD.indexOf(pior)>ORD.indexOf(ultimoNivel)) avisar(`Rio Itapocu: ${ROT[pior]}`, `Régua ${fmt(a.regua_atual,2)} m; em 1 h, pior caso ${fmt(a.regua_pior_1h,2)} m`);
   ultimoNivel=pior;
   // ----- KPIs
@@ -213,9 +237,10 @@ function render(){
   const linha=(v,c,l)=>({label:l,data:lab.map(()=>v),borderColor:c,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
   const leit=lab.map(()=>null);P.leituras.forEach(l=>{const j=P.tempos.indexOf(l.t.slice(0,13)+':00');if(j>=ini&&j<fim)leit[j-ini]=+(+l.elevacao_m).toFixed(2)});
   const agoraPlug={id:'agora',afterDraw(c){const x=c.scales.x.getPixelForValue(i-ini+fr);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='11px system-ui';g.fillText('agora '+P.gerado_em.slice(11,16),x+4,y.top+12);g.restore();}};
+  const CEL=window.matchMedia&&matchMedia('(max-width:600px)').matches, NT=CEL?6:12;
   const base={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
-    plugins:{legend:{labels:{color:css('--tx'),boxWidth:14,font:{size:11}}}},
-    scales:{x:{ticks:{color:css('--mut'),maxTicksLimit:12,maxRotation:0,font:{size:10}},grid:{color:css('--bd')}},y:{ticks:{color:css('--mut')},grid:{color:css('--bd')}}}};
+    plugins:{legend:{position:CEL?'bottom':'top',labels:{color:css('--tx'),boxWidth:CEL?10:14,padding:CEL?6:10,font:{size:CEL?10:11}}}},
+    scales:{x:{ticks:{color:css('--mut'),maxTicksLimit:NT,maxRotation:0,font:{size:10}},grid:{color:css('--bd')}},y:{ticks:{color:css('--mut'),font:{size:CEL?10:12}},grid:{color:css('--bd')}}}};
   // gráfico de nível: eixo de tempo contínuo (régua oficial a cada 10 min + modelo por hora)
   const tx=k=>Date.parse(P.tempos[k]);
   const ser=(arr,cond)=>{const o=[];for(let k=ini;k<fim;k++){if(cond(k)&&arr[k]!=null)o.push({x:tx(k),y:arr[k]})}return o};
@@ -225,7 +250,7 @@ function render(){
   const leitX=P.leituras.map(l=>({x:Date.parse(l.t),y:+l.elevacao_m})).filter(p=>p.x>=xmin);
   const hl=(v,c,l)=>({label:l,data:[{x:xmin,y:v},{x:xmax,y:v}],borderColor:c,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
   const agoraT={id:'agoraT',afterDraw(c){const x=c.scales.x.getPixelForValue(xAgora);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='11px system-ui';g.fillText('agora '+P.gerado_em.slice(11,16),x+4,y.top+12);g.restore();}};
-  const fmtT=v=>{const d=new Date(v);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+'h'};
+  const fmtT=v=>{const d=new Date(v);const h=String(d.getHours()).padStart(2,'0')+'h';return CEL?(d.getHours()===0?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'):h):String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+h};
   draw('cNivel','line',{datasets:[
     {label:'Pior cenário',data:ser(eMax,k=>k>=i),borderColor:'rgba(192,57,43,.5)',backgroundColor:'rgba(31,111,178,.13)',fill:'+1',pointRadius:0,borderWidth:1},
     {label:'Cenário otimista',data:ser(eMin,k=>k>=i),borderColor:'rgba(31,111,178,.35)',pointRadius:0,borderWidth:1,fill:false},
@@ -236,7 +261,7 @@ function render(){
     hl(al.atencao,css('--at'),'Atenção'),hl(al.alerta,css('--al'),'Alerta'),hl(al.transbordamento,css('--tr'),'Alerta máximo')
   ]},{...base,interaction:{mode:'nearest',axis:'x',intersect:false},
      plugins:{...base.plugins,tooltip:{callbacks:{title:it=>it.length?fmtT(it[0].parsed.x)+':'+String(new Date(it[0].parsed.x).getMinutes()).padStart(2,'0'):''}}},
-     scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{color:css('--mut'),maxTicksLimit:12,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}},
+     scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{color:css('--mut'),maxTicksLimit:NT,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}},
              y:{...base.scales.y,title:{display:true,text:'régua (m)',color:css('--mut')}}}},[agoraT]);
   if(ultR) $('notaRegua').innerHTML=`Última leitura da régua: <b>${fmt(ultR.y,2)} m</b> às ${new Date(ultR.x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · equivale a <b>${fmt(ultR.y-r0,2)} m acima do normal</b> (normal = ${fmt(r0,2)} m na régua)`;
   const obsCh=S(P.chuva_modelo.map((v,k)=>k<i?v:null)), prevCh=S(P.chuva_modelo.map((v,k)=>k>=i?v:null));
@@ -317,6 +342,7 @@ async function post(u,b){await fetch(u,{method:'POST',headers:{'Content-Type':'a
 $('btnAtual').onclick=async()=>{const r=await fetch('/api/atualizar',{method:'POST'});const j=await r.json().catch(()=>({}));if(!j.ok&&j.erro)alert(j.erro);else{setTimeout(carregar,1500);setTimeout(carregar,40000);}};
 $('btnSom').onclick=async()=>{som=true;try{await Notification.requestPermission()}catch(e){};$('btnSom').textContent='🔔 Aviso ativo';avisar('Teste','Os avisos estão ativos.');};
 $('hAtras').onchange=$('hFrente').onchange=()=>P&&render();
+let _rz;window.addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>P&&render(),300)});
 carregar();setInterval(carregar,30000);
 </script>
 </body></html>

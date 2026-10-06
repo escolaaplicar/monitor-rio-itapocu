@@ -15,6 +15,8 @@ H = dt.timedelta(hours=1)
 
 
 CONFIG_LOCAL = os.path.join(AQUI, "config.local.json")
+CALIB_AUTO = os.path.join(AQUI, "calibracao_auto.json")
+PREV_1H = os.path.join(AQUI, "previsoes_1h.csv")
 
 
 def _mesclar(base, extra):
@@ -33,6 +35,12 @@ def carregar_config():
     if os.path.exists(CONFIG_LOCAL):
         with open(CONFIG_LOCAL, encoding="utf-8") as f:
             _mesclar(cfg, json.load(f))
+    if os.path.exists(CALIB_AUTO):
+        with open(CALIB_AUTO, encoding="utf-8") as f:
+            ca = json.load(f)
+        if ca.get("aceita"):
+            cfg["hbv"] = dict(ca["hbv"], _calibracao=ca.get("descricao", ""))
+            cfg["curva_chave"] = dict(cfg.get("curva_chave", {}), **ca["curva"])
     return cfg
 
 
@@ -69,7 +77,7 @@ def _horario_medio(leituras, campo):
     return {k: sum(v) / len(v) for k, v in acc.items()}
 
 
-def rodar():
+def rodar(registrar_previsao=True):
     cfg = carregar_config()
     agora = fontes.agora_local()
     h_atual = fontes.hora_cheia(agora)
@@ -409,6 +417,53 @@ def rodar():
         return serie[k] * (1 - (pos - k)) + serie[k + 1] * (pos - k)
     reg_pior_1h = interp(faixa_max, i_agora + fr + 1) + reg0
     reg_media_1h = interp(elev_cen["media"], i_agora + fr + 1) + reg0
+    # ----- verificação: o que foi previsto para 1 h x o que a régua mostrou
+    vcfg = cfg.get("verificacao", {})
+    serie_r = reguas.get(chave_r, []) if cc else []
+    reg_min = {t.strftime("%Y-%m-%dT%H:%M"): n for t, n in serie_r}
+
+    def regua_em(t):
+        for d in range(0, 6):
+            for sinal in (1, -1):
+                k = (t + sinal * dt.timedelta(minutes=d)).strftime("%Y-%m-%dT%H:%M")
+                if k in reg_min:
+                    return reg_min[k]
+        return None
+
+    verif = []
+    if os.path.exists(PREV_1H):
+        with open(PREV_1H, encoding="utf-8") as f:
+            for linha in f.read().splitlines()[1:]:
+                try:
+                    emit, alvo, base_r, med, pio = linha.split(",")
+                except ValueError:
+                    continue
+                ta = dt.datetime.fromisoformat(alvo)
+                if ta > agora or ta < agora - dt.timedelta(hours=vcfg.get("janela_h", 72)):
+                    continue
+                obs = regua_em(ta)
+                if obs is not None:
+                    verif.append({"alvo": alvo, "obs": obs, "media": float(med), "pior": float(pio), "erro": obs - float(med)})
+    pior_modelo_1h = reg_pior_1h
+    fonte_pior = "pior cenário dos modelos de chuva"
+    if len(verif) >= vcfg.get("min_verificacoes", 12):
+        erros_v = sorted(v["erro"] for v in verif)
+        q = erros_v[min(len(erros_v) - 1, int(vcfg.get("quantil_pior_caso", 0.9) * len(erros_v)))]
+        reg_pior_1h = reg_media_1h + max(q, vcfg.get("folga_min_m", 0.05))
+        fonte_pior = f"previsão + erro observado em {len(verif)} previsões anteriores (90% dos casos)"
+    acerto = None
+    if verif:
+        acerto = {"n": len(verif), "erro_medio_cm": round(100 * sum(abs(v["erro"]) for v in verif) / len(verif), 1),
+                  "vies_cm": round(100 * sum(v["erro"] for v in verif) / len(verif), 1),
+                  "pior_cobriu_pct": round(100 * sum(v["obs"] <= v["pior"] for v in verif) / len(verif)),
+                  "ultimas": verif[-24:]}
+    # registra a previsão desta rodada para conferir daqui 1 h
+    if cc and ancora and registrar_previsao:
+        novo = not os.path.exists(PREV_1H)
+        with open(PREV_1H, "a", encoding="utf-8") as f:
+            if novo:
+                f.write("emitida,alvo,regua_base,media_1h,pior_1h\n")
+            f.write(f"{_iso(agora)},{_iso(agora + H)},{reg_atual:.3f},{reg_media_1h:.3f},{reg_pior_1h:.3f}\n")
     nivel_status = nivel_alerta(max(reg_atual, reg_pior_1h))
     # primeira hora prevista (pior cenário) em que cada cota é atingida
     cruzamentos = {}
@@ -458,9 +513,12 @@ def rodar():
                        "ultima_obs_ana": _iso(tempos[idx_obs]) if idx_obs is not None else None,
                        "ancora_leitura": ancora,
                        "tendencia": tendencia,
+                       "auto": (json.load(open(CALIB_AUTO, encoding="utf-8")).get("resumo") if os.path.exists(CALIB_AUTO) else None),
                        "vies_previsao_chuva": vies_prev,
                        "ultima_obs_ana_min": (obs_ana.get(cal["estacao_ana"]) or [{}])[-1].get("t").strftime("%H:%M") if obs_ana.get(cal["estacao_ana"]) else None},
+        "verificacao_1h": acerto,
         "alerta": {"status": nivel_status, "regua_pior_1h": round(reg_pior_1h, 2), "regua_media_1h": round(reg_media_1h, 2),
+                   "pior_1h_fonte": fonte_pior, "pior_1h_modelos": round(pior_modelo_1h, 2),
                    "hora_1h": _iso(agora + H),
                    "nivel_atual": nivel_alerta(reg_atual), "regua_atual": round(reg_atual, 2),
                    "nivel_previsto": nivel_alerta(reg_pico), "regua_pico": round(reg_pico, 2),

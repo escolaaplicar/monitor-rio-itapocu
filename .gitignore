@@ -27,3 +27,5 @@ worker/node_modules/
 # cache do wrangler (dados da conta Cloudflare)
 .wrangler/
 **/.wrangler/
+rio_itapocu/previsoes_1h.csv
+rio_itapocu/calibracao_auto.json

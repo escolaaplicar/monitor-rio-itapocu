@@ -3,6 +3,7 @@ name: Atualizar painel do rio
 on:
   schedule:
     - cron: "*/10 * * * *"
+    - cron: "5 */6 * * *"   # recalibração automática a cada 6 h
   workflow_dispatch:
   push:
     branches: [main]
@@ -42,6 +43,10 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Recalibrar o modelo com o histórico da régua (a cada 6 h)
+        if: github.event.schedule == '5 */6 * * *' || github.event_name == 'workflow_dispatch'
+        run: python recalibrar.py
+
       - name: Calcular previsão e gerar o site
         run: python build_site.py
 
@@ -50,6 +55,7 @@ jobs:
           mkdir -p /tmp/estado
           cp rio_itapocu/historico_reguas.csv /tmp/estado/ 2>/dev/null || true
           cp -r rio_itapocu/cache_ana /tmp/estado/ 2>/dev/null || true
+          cp rio_itapocu/previsoes_1h.csv rio_itapocu/calibracao_auto.json /tmp/estado/ 2>/dev/null || true
           cd /tmp/estado
           git init -q -b estado
           git config user.name "github-actions[bot]"
