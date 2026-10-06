@@ -4,64 +4,119 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Monitor Rio Itapocu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--bg:#f4f6f8;--card:#fff;--tx:#17202a;--mut:#5d6d7e;--bd:#dde3e9;--azul:#1f6fb2;--chuva:#4a90d9;
---ok:#1e8449;--at:#d4ac0d;--al:#e67e22;--tr:#c0392b}
-@media (prefers-color-scheme:dark){:root{--bg:#11161c;--card:#1a222b;--tx:#e8edf2;--mut:#93a4b5;--bd:#2c3846}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,Segoe UI,Roboto,sans-serif}
-main{max-width:1280px;margin:0 auto;padding:16px}
-h1{font-size:20px;margin:0 0 2px}.sub{color:var(--mut);font-size:13px}
-.banner{border-radius:12px;padding:16px 18px;margin:14px 0;color:#fff;display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center}
-.banner b.n{font-size:26px;letter-spacing:.5px}.banner .det{font-size:15px}
-.normal{background:var(--ok)}.atencao{background:var(--at);color:#222}.alerta{background:var(--al)}.transbordamento{background:var(--tr)}
+/* Identidade visual Aplicar (design system APL9): Montserrat, verde #20BC66, coral #F43F2F, petróleo #051924 */
+:root{--bg:#FAFAFA;--card:#fff;--tx:#051924;--mut:#5f6b73;--bd:#E6E6E6;--suave:#F5F5F5;
+--verde:#20BC66;--verde2:#199A55;--verde3:#0F6E3A;--coral:#F43F2F;
+--azul:#1C6DD0;--chuva:#4C9BE8;--regua:#0F6E3A;
+--ok:#20BC66;--at:#F5B70A;--al:#F47B20;--tr:#F43F2F;
+--sombra:0 1px 2px rgba(5,25,36,.04),0 8px 24px rgba(5,25,36,.06);--r:16px}
+@media (prefers-color-scheme:dark){:root{--bg:#020302;--card:#0a0f0c;--tx:#FFFFF5;--mut:#A1AAA5;--bd:#1C221E;--suave:#161D19;
+--azul:#5aa2f0;--chuva:#5aa2f0;--regua:#20BC66;--sombra:0 0 30px #10b9811a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:500 15px/1.45 Montserrat,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-synthesis-weight:none}
+main{max-width:1240px;margin:0 auto;padding:18px}
+a{color:var(--verde2)}
+/* cabeçalho */
+.topo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--verde)}
+.marca svg{width:46px;height:30px}.marca b{font-weight:800;font-size:22px;letter-spacing:-.03em}
+.topo .sep{width:1px;height:30px;background:var(--bd)}
+h1{font-size:19px;font-weight:700;letter-spacing:-.025em;margin:0;line-height:1.25}
+h1 small{display:block;font-size:12.5px;font-weight:500;color:var(--mut);letter-spacing:0;margin-top:2px}
+.sub{color:var(--mut);font-size:12.5px;margin-top:10px}
+.aviso{font-size:12.5px;color:var(--mut)}
+/* primeira dobra */
+.hero{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:14px;margin:14px 0 10px}
+.tarja{border-radius:var(--r);padding:20px;color:#fff;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--sombra)}
+.tarja .rot{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.tarja .n{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:4px}
+.normal{background:var(--ok)}.atencao{background:var(--at);color:#051924}.alerta{background:var(--al)}.transbordamento{background:var(--tr)}
+.quatro{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.num{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--sombra)}
+.num .rot{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.num .val{font-size:32px;font-weight:800;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.1}
+.num .val small{font-size:15px;font-weight:600;color:var(--mut);letter-spacing:0}
+.num .ob{font-size:12px;color:var(--mut);margin-top:4px}
+.sobe{color:var(--coral)}.desce{color:var(--verde2)}.estavel{color:var(--azul)}
+/* régua visual */
+.gauge{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 22px 64px;box-shadow:var(--sombra);overflow:hidden}
+.gauge .barra{position:relative;height:14px;border-radius:7px;margin-top:22px;
+ background:linear-gradient(90deg,var(--ok) 0 var(--p1),var(--at) var(--p1) var(--p2),var(--al) var(--p2) var(--p3),var(--tr) var(--p3) 100%)}
+.gauge .pt{position:absolute;top:-6px;width:26px;height:26px;border-radius:50%;background:var(--tx);border:4px solid var(--card);box-shadow:0 0 0 1px var(--tx);transform:translateX(-50%)}
+.gauge .pt.pior{background:transparent;border:3px dashed var(--tx);box-shadow:none;width:22px;height:22px;top:-4px}
+.gauge .lb{position:absolute;top:26px;transform:translateX(-50%);font-size:11.5px;font-weight:700;white-space:nowrap}
+.gauge .lb.pior{top:42px;font-weight:600;color:var(--mut)}
+.gauge .cota{position:absolute;top:-19px;transform:translateX(-50%);font-size:10.5px;color:var(--mut);white-space:nowrap}
+/* controles */
+.ctl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:14px 0 4px}
+select,button{font:inherit;padding:7px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+button{cursor:pointer;font-weight:600}button.sec{color:var(--verde2);border-color:var(--verde)}
+/* seções */
+h2{font-size:16px;font-weight:700;letter-spacing:-.015em;margin:26px 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sombra)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
-.k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.4px}.v{font-size:26px;font-weight:650;margin-top:2px}
-.v small{font-size:14px;font-weight:500;color:var(--mut)}.d{font-size:12.5px;color:var(--mut)}
-.tend{font-weight:700}.sobe{color:var(--tr)}.desce{color:var(--ok)}
-.ctl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:14px 0}
-select,input,button{font:inherit;padding:5px 8px;border-radius:7px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
-button{cursor:pointer;background:var(--azul);color:#fff;border:0}button.sec{background:transparent;color:var(--azul);border:1px solid var(--azul)}
-.ch{height:340px;position:relative}.ch.s{height:240px}
-h2{font-size:16px;margin:22px 0 8px}
-table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
-.cruz{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}.cruz span{background:rgba(0,0,0,.18);padding:3px 9px;border-radius:20px;font-size:13.5px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:820px){.two{grid-template-columns:1fr}}
-.aviso{font-size:12.5px;color:var(--mut)}a{color:var(--azul)}
-.fontes h3{font-size:14.5px;margin:16px 0 6px}.fontes ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.55}
+.k{color:var(--mut);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+.v{font-size:26px;font-weight:800;letter-spacing:-.03em;margin-top:2px;font-variant-numeric:tabular-nums}
+.v small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}.d{font-size:12px;color:var(--mut)}
+.tend{font-weight:700}
+.ch{height:340px;position:relative}.ch.s{height:250px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.fontes h3{font-size:14.5px;font-weight:700;margin:16px 0 6px}.fontes ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.6}
 .fontes td,.fontes th{font-size:12.5px}
+details summary{cursor:pointer;color:var(--mut);font-size:12.5px;margin-top:8px}
+footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
+@media(max-width:980px){.hero{grid-template-columns:1fr}.quatro{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
 /* ---------- celular ---------- */
 @media (max-width:600px){
- body{font-size:14px}
- main{padding:10px}
- h1{font-size:16.5px;line-height:1.3}
- h2{font-size:14.5px;margin:18px 0 6px}
- .banner{padding:12px 14px;gap:6px;margin:10px 0}
- .banner b.n{font-size:22px}.banner .det{font-size:14px;line-height:1.45}
- .cruz span{font-size:12px;padding:2px 8px}
- .grid{grid-template-columns:1fr 1fr;gap:8px}
- .card{padding:10px 11px;border-radius:10px}
- .k{font-size:10.5px}.v{font-size:21px}.v small{font-size:12px}.d{font-size:11.5px}
- .ctl{gap:8px;margin:10px 0}.ctl label{width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px}
- .ctl button{width:100%;padding:9px}
- select{padding:7px 8px;font-size:15px}
+ body{font-size:14px}main{padding:12px}
+ .marca svg{width:36px;height:24px}.marca b{font-size:18px}.topo .sep{display:none}
+ h1{font-size:16px;width:100%}
+ .tarja{padding:14px 16px;flex-direction:row;align-items:center;justify-content:space-between}
+ .tarja .n{font-size:26px;margin:0}
+ .quatro{gap:8px}.num{padding:12px}.num .val{font-size:25px}.num .rot{font-size:10px}
+ .ctl{gap:8px}.ctl label{width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px}.ctl button{width:100%;padding:10px}
+ select{font-size:15px}
+ .grid{grid-template-columns:1fr 1fr;gap:8px}.card{padding:11px 12px}
+ .v{font-size:21px}.k{font-size:10px}.d{font-size:11.5px}
  .ch{height:300px}.ch.s{height:230px}
- #trKpis{grid-template-columns:1fr!important}
+ h2{font-size:15px;margin:22px 0 8px}
  .fontes table,.fontes tbody,.fontes tr,.fontes td{display:block;width:100%}
- .fontes tr:first-child{display:none}
- .fontes tr{border-bottom:1px solid var(--bd);padding:8px 0}
- .fontes td{border:0;padding:2px 0}
- .fontes ul{padding-left:16px;font-size:13px}
- table{font-size:12px}
+ .fontes tr:first-child{display:none}.fontes tr{border-bottom:1px solid var(--bd);padding:8px 0}.fontes td{border:0;padding:2px 0}
+ .fontes ul{padding-left:16px;font-size:13px}table{font-size:12px}
 }
 </style>
 </head>
 <body><main>
-<h1>Monitor do Rio Itapocu, 250 m a jusante da confluência dos rios Novo e Humboldt (Corupá/SC)</h1>
+<header class="topo">
+ <a class="marca" href="https://escolaaplicar.com.br/" title="Escola Aplicar">
+  <svg viewBox="0 0 64 40" aria-hidden="true"><polygon points="2,38 2,24 20,6 20,20" fill="#20BC66"/><polygon points="22,38 22,24 40,6 40,20" fill="#199A55"/><polygon points="42,38 42,24 60,6 60,20" fill="#0F6E3A"/></svg>
+  <b>Aplicar</b></a>
+ <span class="sep"></span>
+ <h1>Nível do Rio Itapocu em Corupá<small>Régua da Ponte Corupá (Rua Roberto Seidel) · Rio Novo + Rio Humboldt · Corupá/SC</small></h1>
+</header>
 <div class="sub" id="sub">carregando…</div>
 
-<div class="banner normal" id="banner"><b class="n">…</b></div>
+<!-- primeira dobra: status + 4 números -->
+<section class="hero">
+ <div class="tarja normal" id="tarja"><span class="rot">Situação do rio</span><span class="n" id="tarjaTxt">…</span></div>
+ <div class="quatro">
+  <div class="num"><div class="rot">Nível agora</div><div class="val" id="hAgora">–</div><div class="ob" id="hAgoraOb"></div></div>
+  <div class="num"><div class="rot">Daqui 1 hora</div><div class="val" id="h1">–</div><div class="ob">estimativa</div></div>
+  <div class="num"><div class="rot">Pior caso em 1 hora</div><div class="val" id="h1p">–</div><div class="ob">se chover mais que o previsto</div></div>
+  <div class="num"><div class="rot">O rio está</div><div class="val" id="hTend">–</div><div class="ob" id="hTendOb"></div></div>
+ </div>
+</section>
+<div class="gauge" id="gauge"></div>
+<details><summary>Como o “pior caso” é calculado</summary><div class="aviso" id="piorInfo" style="margin-top:6px"></div></details>
 
 <div class="ctl">
   <label>Chuva acumulada nas últimas <select id="hAtras"><option>3</option><option>6</option><option selected>12</option><option>24</option><option>48</option><option>72</option><option>96</option><option>168</option></select> h</label>
@@ -70,37 +125,35 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;b
   <button class="sec" id="btnSom">🔔 Ativar som e aviso do navegador</button>
 </div>
 
-<div class="grid" id="kpis"></div>
-
-<h2>Nível do rio na régua da Ponte Corupá (m)</h2>
+<h2>Nível do rio na régua da Ponte Corupá</h2>
 <div class="card"><div class="ch"><canvas id="cNivel"></canvas></div>
-<div class="aviso">Linha cheia: estimativa a partir dos dados observados. Tracejada: previsão (média dos modelos). Faixa: do cenário mais otimista ao pessimista (em cada hora, o maior valor de chuva entre os modelos, já corrigido pelo erro recente). Linha verde: régua oficial SAMAE/Defesa Civil da Ponte Corupá (leituras a cada 10 min). Pontos roxos: leituras manuais registradas pelo responsável pelo painel.</div><div class="aviso" id="notaRegua" style="font-size:14px;margin-top:4px"></div></div>
+<div class="aviso">Linha verde escura: régua oficial SAMAE/Defesa Civil (leituras a cada 10 min). Tracejada azul: previsão. Faixa: do cenário mais otimista ao pessimista. Linhas coloridas horizontais: cotas de atenção, alerta e alerta máximo.</div>
+<div class="aviso" id="notaRegua" style="font-size:13.5px;margin-top:4px"></div></div>
+<div class="grid" id="kpisNivel" style="margin-top:12px"></div>
 
-<div class="two">
- <div><h2>Chuva na bacia por hora (mm): barras = série usada no cálculo; linha laranja = radar, para conferência</h2><div class="card"><div class="ch s"><canvas id="cChuva"></canvas></div></div></div>
- <div><h2>Vazão (m³/s)</h2><div class="card"><div class="ch s"><canvas id="cVazao"></canvas></div></div></div>
-</div>
-
-<h2>Tempo de resposta da bacia: quando a chuva chega ao rio</h2>
-<div class="two">
- <div class="card"><div id="trTexto" style="font-size:15px;line-height:1.5"></div>
+<div class="two" style="margin-top:12px">
+ <div><h2>Quanto tempo a chuva leva para chegar ao rio</h2>
+  <div class="card"><div id="trTexto" style="font-size:14.5px;line-height:1.55"></div>
   <div class="ch s" style="margin-top:10px;height:260px"><canvas id="cResp"></canvas></div>
-  <div class="aviso">Barras: chuva por hora na bacia (média dos pluviômetros). Linha verde: régua da Ponte Corupá. As linhas verticais marcam o pico da chuva e o pico do rio; a distância entre elas é o tempo que a chuva leva para virar nível no ponto.</div></div>
- <div class="card"><div class="k" style="margin-bottom:6px">Réguas do Rio Itapocu (SAMAE/Defesa Civil), últimas 48 h</div>
-  <div class="ch s"><canvas id="cReguas"></canvas></div>
-  <div class="aviso">A onda de cheia passa por Corupá e chega horas depois a Jaraguá do Sul (Nereu Ramos, ETA Central e Via Verde). Cotas iguais em todas: atenção 2,4 m, alerta 3,5 m, alerta máximo 5,0 m.</div></div>
+  <div class="aviso">Barras: chuva por hora na bacia. Linha verde: régua da Ponte Corupá. A seta mostra o atraso entre o pico da chuva e o pico do rio.</div></div></div>
+ <div><h2>Radar: onde está chovendo agora</h2>
+  <div class="card" style="text-align:center"><img id="radarGif" alt="animação do radar meteorológico sobre a bacia" style="max-width:100%;image-rendering:pixelated;border-radius:10px">
+  <div class="grid" id="radarKpis" style="grid-template-columns:1fr 1fr;margin-top:10px;text-align:left"></div>
+  <div class="aviso" style="text-align:left;margin-top:8px">Radar da Defesa Civil SC (mosaico C-MAX). Contorno preto: bacia do Rio Novo e do Rio Humboldt. Cor convertida em chuva pela relação de Marshall-Palmer (Z = 200·R<sup>1,6</sup>) e ajustada aos pluviômetros. Nas próximas 3 h, o radar pesa 100%, 70% e 40% na chuva usada na previsão.</div></div></div>
 </div>
 
-<h2>Radar meteorológico (Defesa Civil SC, mosaico C-MAX), sobre a bacia</h2>
 <div class="two">
- <div class="card" style="text-align:center"><img id="radarGif" alt="animação do radar" style="max-width:100%;image-rendering:pixelated;border-radius:8px"></div>
- <div class="card">
-  <div class="grid" id="radarKpis" style="grid-template-columns:1fr 1fr"></div>
-  <div class="aviso">Cor do radar convertida em dBZ e depois em mm/h (Marshall-Palmer, Z = 200·R<sup>1,6</sup>), na média da bacia (contorno preto). O fator de viés ajusta o radar aos pluviômetros nas últimas horas. Previsão imediata: as células de chuva são deslocadas na direção e velocidade medidas nos últimos quadros. Nas próximas 3 h, ela pesa 100%, 70% e 40% na série de chuva do cálculo, mostrada no gráfico “Chuva na bacia”. Depois disso, valem os modelos meteorológicos, corrigidos pelo erro que tiveram nas últimas 12 h.</div>
- </div>
+ <div><h2>Chuva na bacia</h2><div class="grid mini" id="kpisChuva"></div>
+  <div class="card"><div class="ch s"><canvas id="cChuva"></canvas></div>
+  <div class="aviso">Barras: chuva medida pelos pluviômetros (passado) e prevista (futuro). Linha laranja: radar, para conferência.</div></div></div>
+ <div><h2>Vazão do rio</h2><div class="grid mini" id="kpisVazao"></div>
+  <div class="card"><div class="ch s"><canvas id="cVazao"></canvas></div>
+  <div class="aviso">Vazão estimada a partir da régua (curva-chave) e prevista pelo modelo. Não há medição direta de vazão no ponto.</div></div></div>
 </div>
 
-</div>
+<h2>A onda de cheia rio abaixo: réguas em Corupá e Jaraguá do Sul</h2>
+<div class="card"><div class="ch s"><canvas id="cReguas"></canvas></div>
+<div class="aviso">A cheia passa por Corupá e chega horas depois a Jaraguá do Sul (Nereu Ramos, ETA Central e Via Verde). As cotas são as mesmas em todas: atenção 2,4 m, alerta 3,5 m e alerta máximo 5,0 m.</div></div>
 
 <h2>Status das fontes agora</h2>
 <div class="card"><table id="tFontes"></table></div>
@@ -113,42 +166,42 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;b
 <table>
 <tr><th>Fonte</th><th>O que fornece</th><th>Atualização</th><th>Uso no painel</th></tr>
 <tr><td><b>SAMAE de Jaraguá do Sul / Defesa Civil de Jaraguá do Sul</b><br>Réguas do Rio Itapocu: Ponte Corupá (Rua Roberto Seidel), Ponte Nereu Ramos, SAMAE ETA Central, Ponte Via Verde<br>
-<a href="https://sistemas.samaejs.com.br:3000/grafana/public-dashboards/964bfc3d627a4d3db5f760c4654b7b57" target="_blank">Painel público “Níveis dos Rios”</a> · <a href="https://www.jaraguadosul.sc.gov.br/defesa-civil" target="_blank">Defesa Civil de Jaraguá do Sul</a></td>
+<a href="https://sistemas.samaejs.com.br:3000/grafana/public-dashboards/964bfc3d627a4d3db5f760c4654b7b57" target="_blank" rel="noopener">Painel público “Níveis dos Rios”</a> · <a href="https://www.jaraguadosul.sc.gov.br/defesa-civil" target="_blank" rel="noopener">Defesa Civil de Jaraguá do Sul</a></td>
 <td>Nível da régua (m) e cotas oficiais: atenção 2,4 m, alerta 3,5 m, alerta máximo 5,0 m</td><td>1 min (o painel público mostra ~21 h; este monitor grava o histórico)</td>
 <td>Nível observado, cotas de alerta, ponto de partida da previsão e calibração do modelo</td></tr>
 <tr><td><b>CEMADEN</b>, Centro Nacional de Monitoramento e Alertas de Desastres Naturais<br>Pluviômetro 6925 “João Tozini” (Corupá, junto à confluência)<br>
-<a href="https://mapainterativo.cemaden.gov.br/" target="_blank">Mapa Interativo CEMADEN</a></td>
+<a href="https://mapainterativo.cemaden.gov.br/" target="_blank" rel="noopener">Mapa Interativo CEMADEN</a></td>
 <td>Chuva por hora (mm)</td><td>10 min / horária</td><td>Chuva observada na bacia (peso 0,35)</td></tr>
 <tr><td><b>Epagri/CIRAM</b>, Centro de Informações de Recursos Ambientais e de Hidrometeorologia de SC<br>Estação 2399 “Corupá - Guarajuva” (vale do Rio Novo)<br>
-<a href="https://ciram.epagri.sc.gov.br/agroconnect/" target="_blank">AgroConnect</a></td>
+<a href="https://ciram.epagri.sc.gov.br/agroconnect/" target="_blank" rel="noopener">AgroConnect</a></td>
 <td>Chuva por hora (mm)</td><td>Horária</td><td>Chuva observada na bacia (peso 0,35)</td></tr>
 <tr><td><b>ANA</b>, Agência Nacional de Águas e Saneamento Básico, Rede Hidrometeorológica Nacional / Hidrotelemetria<br>82336000 “PCH Rabo do Macaco Jusante” (Rio Humboldt) · 82338000 “CGH Ano Bom Jusante” (Rio Ano Bom)<br>
-<a href="https://www.snirh.gov.br/hidrotelemetria/" target="_blank">SNIRH Hidrotelemetria</a></td>
+<a href="https://www.snirh.gov.br/hidrotelemetria/" target="_blank" rel="noopener">SNIRH Hidrotelemetria</a></td>
 <td>Chuva, nível e vazão</td><td>~30 min</td><td>Chuva da bacia do Humboldt (peso 0,30) e vazão observada para calibrar e corrigir o modelo</td></tr>
 <tr><td><b>Radares meteorológicos de SC</b>: Defesa Civil de Santa Catarina e Epagri/CIRAM<br>Mosaico C-MAX (radares de Chapecó, Lontras e Araranguá)<br>
-<a href="https://ciram.epagri.sc.gov.br/index.php/radar/" target="_blank">Radar CIRAM</a> · <a href="https://www.defesacivil.sc.gov.br/" target="_blank">Defesa Civil SC</a></td>
+<a href="https://ciram.epagri.sc.gov.br/index.php/radar/" target="_blank" rel="noopener">Radar CIRAM</a> · <a href="https://www.defesacivil.sc.gov.br/" target="_blank" rel="noopener">Defesa Civil SC</a></td>
 <td>Refletividade (dBZ) a cada 10 min</td><td>10 min</td><td>Chuva atual na bacia, animação e previsão imediata (0–3 h)</td></tr>
 </table>
 
 <h3>Previsão do tempo</h3>
 <table>
 <tr><th>Fonte</th><th>O que fornece</th><th>Uso no painel</th></tr>
-<tr><td><b>Open-Meteo</b>: <a href="https://open-meteo.com/" target="_blank">open-meteo.com</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>), reunindo os modelos:<br>
+<tr><td><b>Open-Meteo</b>: <a href="https://open-meteo.com/" target="_blank" rel="noopener">open-meteo.com</a> (licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>), reunindo os modelos:<br>
 • <b>ECMWF IFS 0,25°</b>: Centro Europeu de Previsões Meteorológicas de Médio Prazo<br>
 • <b>GFS</b>: NOAA / NCEP (EUA)<br>
 • <b>ICON</b>: Serviço Meteorológico Alemão (DWD)</td>
 <td>Chuva prevista hora a hora, em 4 pontos da bacia</td><td>Chuva prevista depois das 3 primeiras horas, corrigida pelo erro de cada modelo nas últimas 12 h. Cenários otimista, médio e pessimista</td></tr>
-<tr><td><b>Epagri/CIRAM</b>: <a href="https://ciram.epagri.sc.gov.br/index.php/previsao-modelo-chuva/" target="_blank">previsão de chuva por modelo</a> · <a href="https://ciram.epagri.sc.gov.br/index.php/previsao-modelo-chuva-acumulada/" target="_blank">chuva acumulada prevista</a></td>
+<tr><td><b>Epagri/CIRAM</b>: <a href="https://ciram.epagri.sc.gov.br/index.php/previsao-modelo-chuva/" target="_blank" rel="noopener">previsão de chuva por modelo</a> · <a href="https://ciram.epagri.sc.gov.br/index.php/previsao-modelo-chuva-acumulada/" target="_blank" rel="noopener">chuva acumulada prevista</a></td>
 <td>Mapas de previsão</td><td>Só consulta e comparação (não entra no cálculo)</td></tr>
 </table>
 
 <h3>Estudos e dados usados para definir parâmetros</h3>
 <ul>
-<li><b>ANA, HidroWeb / Inventário de estações</b>: áreas de drenagem (Rio Novo em Corupá, 82320000: 182 km²; Rio Humboldt, 82336000: 130 km²; Itapocu em Jaraguá do Sul, 82350000: 794 km²) e séries históricas de vazão (vazão média do Rio Novo em Corupá: 6,56 m³/s). <a href="https://www.snirh.gov.br/hidroweb/" target="_blank">snirh.gov.br/hidroweb</a></li>
-<li><b>Negri et al.</b>, hidrograma unitário (Nash e geomorfológico) do Rio Itapocu em Jaraguá do Sul, XXIV Simpósio Brasileiro de Recursos Hídricos, ABRHidro, 2022. <a href="https://files.abrhidro.org.br/Eventos/Trabalhos/142/XXIV-SBRH0055-2-0-20221031-214239.pdf" target="_blank">PDF</a></li>
-<li>Área da bacia do Itapocu (2.919,8 km², incluindo a bacia litorânea do Itajuba): <a href="https://static.even3.com/anais/663620.pdf" target="_blank">anais Even3</a> (consulta)</li>
+<li><b>ANA, HidroWeb / Inventário de estações</b>: áreas de drenagem (Rio Novo em Corupá, 82320000: 182 km²; Rio Humboldt, 82336000: 130 km²; Itapocu em Jaraguá do Sul, 82350000: 794 km²) e séries históricas de vazão (vazão média do Rio Novo em Corupá: 6,56 m³/s). <a href="https://www.snirh.gov.br/hidroweb/" target="_blank" rel="noopener">snirh.gov.br/hidroweb</a></li>
+<li><b>Negri et al.</b>, hidrograma unitário (Nash e geomorfológico) do Rio Itapocu em Jaraguá do Sul, XXIV Simpósio Brasileiro de Recursos Hídricos, ABRHidro, 2022. <a href="https://files.abrhidro.org.br/Eventos/Trabalhos/142/XXIV-SBRH0055-2-0-20221031-214239.pdf" target="_blank" rel="noopener">PDF</a></li>
+<li>Área da bacia do Itapocu (2.919,8 km², incluindo a bacia litorânea do Itajuba): <a href="https://static.even3.com/anais/663620.pdf" target="_blank" rel="noopener">anais Even3</a> (consulta)</li>
 <li><b>CEMADEN</b>: estação hidrológica 6637 “Rio Novo” (Corupá), desativada desde 2024. Consultada no início; as cotas dela não são mais usadas.</li>
-<li>Coordenadas da confluência Rio Novo + Rio Humboldt (26°26′S 49°14′W): <a href="https://en.wikipedia.org/wiki/Humboldt_River_(Brazil)" target="_blank">Wikipedia</a> · relevo: <a href="https://pt-br.topographic-map.com/map-r3q5cz/Itapocu/" target="_blank">topographic-map.com</a></li>
+<li>Coordenadas da confluência Rio Novo + Rio Humboldt (26°26′S 49°14′W): <a href="https://en.wikipedia.org/wiki/Humboldt_River_(Brazil)" target="_blank" rel="noopener">Wikipedia</a> · relevo: <a href="https://pt-br.topographic-map.com/map-r3q5cz/Itapocu/" target="_blank" rel="noopener">topographic-map.com</a></li>
 <li>Área no ponto (~400 km²), forma do canal e nível normal da régua (0,40 m): estimativas próprias a partir das fontes acima e de imagem de satélite.</li>
 </ul>
 
@@ -163,85 +216,103 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;b
 
 <h3>Conferência com boletins (06/10/2026)</h3>
 <ul>
-<li><a href="https://cbntotal.com.br/cotidiano/chuva-supera-100-mm-em-24-horas-em-cidade-e-provoca-alagamentos-e-interdicoes-no-norte-de-sc/" target="_blank">CBN Total: chuva supera 100 mm em 24 horas</a> · <a href="https://ndmais.com.br/tempo/rios-chegam-3-5-metros-chuva-continua-norte-sc/" target="_blank">ND+: rios chegam a 3,5 metros</a> · <a href="https://www.nsctotal.com.br/tempo/chuva-faz-rio-atingir-cota-de-alerta-maximo-ocupar-area-alagavel-em-jaragua-do-sul-e-forcar-desvios-no-transito" target="_blank">NSC Total: cota de alerta máximo em Jaraguá do Sul</a></li>
+<li><a href="https://cbntotal.com.br/cotidiano/chuva-supera-100-mm-em-24-horas-em-cidade-e-provoca-alagamentos-e-interdicoes-no-norte-de-sc/" target="_blank" rel="noopener">CBN Total: chuva supera 100 mm em 24 horas</a> · <a href="https://ndmais.com.br/tempo/rios-chegam-3-5-metros-chuva-continua-norte-sc/" target="_blank" rel="noopener">ND+: rios chegam a 3,5 metros</a> · <a href="https://www.nsctotal.com.br/tempo/chuva-faz-rio-atingir-cota-de-alerta-maximo-ocupar-area-alagavel-em-jaragua-do-sul-e-forcar-desvios-no-transito" target="_blank" rel="noopener">NSC Total: cota de alerta máximo em Jaraguá do Sul</a></li>
 </ul>
 
 <h3>Software</h3>
-<p class="aviso" style="font-size:13px">Gráficos: <a href="https://www.chartjs.org/" target="_blank">Chart.js</a> (MIT). Coleta e modelo: Python, <a href="https://requests.readthedocs.io/" target="_blank">requests</a> e <a href="https://python-pillow.org/" target="_blank">Pillow</a>.</p>
+<p class="aviso" style="font-size:13px">Gráficos: <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> (MIT). Coleta e modelo: Python, <a href="https://requests.readthedocs.io/" target="_blank" rel="noopener">requests</a> e <a href="https://python-pillow.org/" target="_blank" rel="noopener">Pillow</a>. Tipografia: Montserrat.</p>
 </div>
 
 <h2>Como a previsão é feita</h2>
-<div class="card aviso" id="metodo" style="font-size:13.5px;line-height:1.55"></div>
+<div class="card aviso" id="metodo" style="font-size:13.5px;line-height:1.6"></div>
+<footer>Escola Aplicar · previsão experimental, não oficial · em emergência, Defesa Civil <b>199</b></footer>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const ROT={normal:'NORMAL',atencao:'ATENÇÃO',alerta:'ALERTA',transbordamento:'ALERTA MÁXIMO'};
+const ORD=['normal','atencao','alerta','transbordamento'];
 let P=null, J={}, charts={}, som=false, ultimoNivel=null;
+if(window.Chart){Chart.defaults.font.family='Montserrat, system-ui, sans-serif';Chart.defaults.font.weight=500;}
 function relogio(){if(!P)return;const n=new Date(),g=new Date(P.gerado_em),idade=Math.round((n-g)/6e4),prox=Math.max(0,P.config.atualizacao_min-idade);
-  $('sub').innerHTML=`<b>Agora ${n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</b> · cálculo feito às ${P.gerado_em.slice(11,16)} (${idade} min atrás) · `+
-  (J.rodando?'<b>buscando dados novos…</b>':`próximo em ~${prox} min`)+` · última medição ANA: ${P.calibracao.ultima_obs_ana_min||'—'}`+(J.erro?' · ERRO: '+J.erro:'')+(idade>P.config.atualizacao_min+5?' · <b style="color:var(--tr)">⚠ DADOS ATRASADOS: verifique o servidor</b>':'');}
+  $('sub').innerHTML=`<b>Agora ${n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</b> · dados de ${P.gerado_em.slice(11,16)} (${idade} min atrás) · `+
+  (J.rodando?'<b>buscando dados novos…</b>':`próxima atualização em ~${prox} min`)+(J.erro?' · ERRO: '+J.erro:'')+(idade>P.config.atualizacao_min+5?' · <b style="color:var(--coral)">⚠ dados atrasados</b>':'');}
 setInterval(relogio,20000);
 const fmt=(v,n=1)=>v==null||isNaN(v)?'—':v.toLocaleString('pt-BR',{minimumFractionDigits:n,maximumFractionDigits:n});
 const hh=s=>s?s.slice(8,10)+'/'+s.slice(5,7)+' '+s.slice(11,16):'—';
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const nivelDe=(r,al)=>ORD.reduce((n,k)=>r>=(k==='normal'?-99:al[k])?k:n,'normal');
 
 async function carregar(){
   try{const r=await fetch('/api/dados',{cache:'no-store'});const j=await r.json();
     if(j.pacote){P=j.pacote;render();}
     J=j;relogio();
-  }catch(e){$('sub').textContent='Servidor indisponível: '+e}
+  }catch(e){$('sub').textContent='Dados indisponíveis no momento: '+e}
 }
 function acum(arr,i0,i1){let s=0;for(let i=Math.max(0,i0);i<Math.min(arr.length,i1);i++)s+=arr[i]||0;return s}
+const cartao=x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`;
 
 function render(){
   const i=P.i_agora, fr=(+P.gerado_em.slice(14,16))/60, A=+$('hAtras').value, F=+$('hFrente').value, al=P.config.alertas, r0=al.regua_normal_m;
   const reg=a=>a.map(v=>v==null?null:+(v+r0).toFixed(2));
   const eM=reg(P.elev_melhor), eP=reg(P.elev_prev), eMin=reg(P.elev_prev_min), eMax=reg(P.elev_prev_max);
   const a=P.alerta;
-  // ----- banner
-  const ORD=['normal','atencao','alerta','transbordamento'];
+  // ----- primeira dobra: tarja + 4 números
   const pior=a.status||a.nivel_atual;
-  const b=$('banner');b.className='banner '+pior;
-  const dif=a.regua_media_1h-a.regua_atual, tendTxt=dif>0.03?'subindo':dif<-0.03?'descendo':'estável';
-  b.innerHTML=`<b class="n">${ROT[pior]}</b>
-   <div class="det">Agora (${P.gerado_em.slice(11,16)}): régua da Ponte Corupá em <b>${fmt(a.regua_atual,2)} m</b> (${ROT[a.nivel_atual]}), ${tendTxt}<br>
-   Daqui 1 hora (${a.hora_1h.slice(11,16)}): previsão de <b>${fmt(a.regua_media_1h,2)} m</b>; no pior caso, <b>${fmt(a.regua_pior_1h,2)} m</b> (${ROT[ORD.reduce((n,k)=>a.regua_pior_1h>=(k==='normal'?-1:al[k])?k:n,'normal')]})
-   <div class="cruz"><span>Atenção ${fmt(al.atencao,1)} m</span><span>Alerta ${fmt(al.alerta,1)} m</span><span>Alerta máximo ${fmt(al.transbordamento,1)} m</span></div>
-   <div style="font-size:12.5px;margin-top:6px;opacity:.9">Pior caso: ${a.pior_1h_fonte||''}.${P.verificacao_1h?` Acerto das previsões de 1 h: erro médio de ${fmt(P.verificacao_1h.erro_medio_cm,0)} cm em ${P.verificacao_1h.n} conferências; o pior caso cobriu ${P.verificacao_1h.pior_cobriu_pct}% delas.`:''}<br>O status considera o nível agora e o pior caso para a próxima 1 hora. A previsão para as horas seguintes, com mais incerteza, aparece no gráfico abaixo.</div></div>`;
+  $('tarja').className='tarja '+pior; $('tarjaTxt').textContent=ROT[pior];
+  const dif=a.regua_media_1h-a.regua_atual;
+  const tend=dif>0.03?['▲ Enchendo','sobe']:dif<-0.03?['▼ Esvaziando','desce']:['● Estável','estavel'];
+  $('hAgora').innerHTML=`${fmt(a.regua_atual,2)} <small>m</small>`;
+  $('hAgoraOb').textContent=`régua às ${P.gerado_em.slice(11,16)} · ${ROT[a.nivel_atual].toLowerCase()}`;
+  $('h1').innerHTML=`${fmt(a.regua_media_1h,2)} <small>m</small>`;
+  $('h1p').innerHTML=`${fmt(a.regua_pior_1h,2)} <small>m</small>`;
+  $('hTend').innerHTML=`<span class="${tend[1]}">${tend[0]}</span>`;
+  $('hTendOb').textContent=`${dif>=0?'+':''}${fmt(dif*100,0)} cm na próxima hora`;
+  // régua visual com as cotas
+  const celG=window.matchMedia&&matchMedia('(max-width:600px)').matches;
+  const top=Math.max(al.transbordamento+1,a.regua_pior_1h+0.5), pc=v=>Math.min(100,Math.max(0,v/top*100));
+  const g=$('gauge');g.style.setProperty('--p1',pc(al.atencao)+'%');g.style.setProperty('--p2',pc(al.alerta)+'%');g.style.setProperty('--p3',pc(al.transbordamento)+'%');
+  g.innerHTML=`<div class="k">Onde o rio está na régua</div><div class="barra">
+    <span class="cota" style="left:${pc(al.atencao)}%">${celG?'':'atenção '}${fmt(al.atencao,1)} m</span>
+    <span class="cota" style="left:${pc(al.alerta)}%">${celG?'':'alerta '}${fmt(al.alerta,1)} m</span>
+    <span class="cota" style="left:${pc(al.transbordamento)}%">${celG?'':'máximo '}${fmt(al.transbordamento,1)} m</span>
+    <span class="pt pior" style="left:${pc(a.regua_pior_1h)}%" title="pior caso em 1 hora"></span>
+    <span class="pt" style="left:${pc(a.regua_atual)}%" title="agora"></span>
+    <span class="lb" style="left:${Math.min(85,Math.max(15,pc(a.regua_atual)))}%">● agora ${fmt(a.regua_atual,2)} m</span>
+    <span class="lb pior" style="left:${Math.min(80,Math.max(20,pc(a.regua_pior_1h)))}%">◌ pior caso em 1 h ${fmt(a.regua_pior_1h,2)} m</span></div>`;
+  g.style.paddingBottom='64px';
+  $('piorInfo').innerHTML=`${a.pior_1h_fonte||''}.${P.verificacao_1h?` Acerto das previsões de 1 h: erro médio de ${fmt(P.verificacao_1h.erro_medio_cm,0)} cm em ${P.verificacao_1h.n} conferências; o pior caso cobriu ${P.verificacao_1h.pior_cobriu_pct}% delas.`:''} A situação considera o nível agora e o pior caso para a próxima 1 hora; a previsão das horas seguintes tem mais incerteza e aparece no gráfico.`;
   if(ultimoNivel && pior!==ultimoNivel && ORD.indexOf(pior)>ORD.indexOf(ultimoNivel)) avisar(`Rio Itapocu: ${ROT[pior]}`, `Régua ${fmt(a.regua_atual,2)} m; em 1 h, pior caso ${fmt(a.regua_pior_1h,2)} m`);
   ultimoNivel=pior;
-  // ----- KPIs
+  // ----- cartões perto de cada gráfico
   const nivelAgora=+(eM[i]*(1-fr)+eP[i+1]*fr).toFixed(2), qAgora=P.q_melhor[i]*(1-fr)+P.q_prev[i+1]*fr;
-  const tend=(eP[i+1]-eM[i]);const tendF=(eP[Math.min(i+1,eP.length-1)]-eP[i]);
-  const tTxt=d=>d>0.03?'<span class="tend sobe">▲ ENCHENDO</span>':d<-0.03?'<span class="tend desce">▼ ESVAZIANDO</span>':'<span class="tend">● ESTÁVEL</span>';
+  const tendF=(eP[Math.min(i+1,eP.length-1)]-eP[i]), tendA=(eP[i+1]-eM[i]);
+  const tTxt=d=>d>0.03?'<span class="tend sobe">▲ ENCHENDO</span>':d<-0.03?'<span class="tend desce">▼ ESVAZIANDO</span>':'<span class="tend estavel">● ESTÁVEL</span>';
   let picoF=i;for(let k=i;k<=Math.min(i+F,eP.length-1);k++)if(eP[k]>eP[picoF])picoF=k;
   let picoQ=i;for(let k=i;k<=Math.min(i+F,P.q_prev.length-1);k++)if(P.q_prev[k]>P.q_prev[picoQ])picoQ=k;
   const chA=acum(P.chuva_modelo,i-A+1,i+1), chF=acum(P.chuva_modelo,i+1,i+1+F), chFP=acum(P.chuva_prev_pessimista,i+1,i+1+F);
-  // cada estação conta as últimas A horas a partir do último dado que ela publicou (a CIRAM atrasa ~1 h)
   const ultimo=s=>{for(let k=Math.min(i,s.length-1);k>=0;k--)if(s[k]!=null)return k;return i};
-  const est=Object.entries(P.chuva_estacoes).map(([n,s])=>{const u=ultimo(s);return `${n.split(' - ')[0].replace('Epagri/','')}: ${fmt(acum(s,u-A+1,u+1))} (até ${P.tempos[u+1]?P.tempos[u+1].slice(11,16):'agora'})`}).join(' · ');
-  const k=[
-   ['Chuva nas últimas '+A+' h',`${fmt(chA)} <small>mm</small>`,'média da bacia · '+est],
-   ['Chuva prevista para as próximas '+F+' h',`${fmt(chF)} <small>mm</small>`,`radar nas primeiras horas + modelos corrigidos (erro ×${Object.values(P.calibracao.vies_previsao_chuva||{}).map(v=>fmt(v,1)).join('/')}) · pessimista: ${fmt(chFP)} mm`],
-   ['Nível atual na régua · '+P.gerado_em.slice(11,16),`${fmt(nivelAgora,2)} <small>m</small>`,`${fmt(nivelAgora-r0,2)} m acima do normal · ${tTxt(tend)}`],
+  const est=Object.entries(P.chuva_estacoes).map(([n,s])=>{const u=ultimo(s);return `${n.split(' - ')[0].replace('Epagri/','')}: ${fmt(acum(s,u-A+1,u+1))}`}).join(' · ');
+  $('kpisNivel').innerHTML=[
+   ['Nível atual na régua · '+P.gerado_em.slice(11,16),`${fmt(nivelAgora,2)} <small>m</small>`,`${fmt(nivelAgora-r0,2)} m acima do normal · ${tTxt(tendA)}`],
    ['Nível '+A+' h atrás (antes da chuva)',`${fmt(eM[i-A],2)} <small>m</small>`,`variação: ${(nivelAgora-eM[i-A]>=0?'+':'')}${fmt(nivelAgora-eM[i-A],2)} m`],
-   ['Nível previsto em '+F+' h',`${fmt(eP[i+F],2)} <small>m</small>`,`faixa ${fmt(eMin[i+F],2)}–${fmt(eMax[i+F],2)} m · pico ${fmt(eP[picoF],2)} m às ${hh(P.tempos[picoF])}<br>próxima hora: ${tTxt(tendF)}`],
-   ['Vazão atual · '+P.gerado_em.slice(11,16),`${fmt(qAgora,0)} <small>m³/s</small>`,`normal ≈ ${fmt(P.config.canal.vazao_normal_m3s,0)} m³/s`],
-   ['Vazão prevista (pico em '+F+' h)',`${fmt(P.q_prev[picoQ],0)} <small>m³/s</small>`,`às ${hh(P.tempos[picoQ])} · faixa ${fmt(P.q_prev_min[picoQ],0)}–${fmt(P.q_prev_max[picoQ],0)}`]
-  ];
-  $('kpis').innerHTML=k.map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join('');
-  // ----- charts
+   ['Nível previsto em '+F+' h',`${fmt(eP[i+F],2)} <small>m</small>`,`faixa ${fmt(eMin[i+F],2)}–${fmt(eMax[i+F],2)} m · pico ${fmt(eP[picoF],2)} m às ${hh(P.tempos[picoF])}<br>próxima hora: ${tTxt(tendF)}`]
+  ].map(cartao).join('');
+  $('kpisChuva').innerHTML=[
+   ['Últimas '+A+' h',`${fmt(chA)} <small>mm</small>`,est],
+   ['Próximas '+F+' h',`${fmt(chF)} <small>mm</small>`,`pior caso ${fmt(chFP)} mm`]
+  ].map(cartao).join('');
+  $('kpisVazao').innerHTML=[
+   ['Vazão agora',`${fmt(qAgora,0)} <small>m³/s</small>`,`normal ≈ ${fmt(P.config.canal.vazao_normal_m3s,0)} m³/s`],
+   ['Pico previsto em '+F+' h',`${fmt(P.q_prev[picoQ],0)} <small>m³/s</small>`,`às ${hh(P.tempos[picoQ])} · faixa ${fmt(P.q_prev_min[picoQ],0)}–${fmt(P.q_prev_max[picoQ],0)}`]
+  ].map(cartao).join('');
+  // ----- gráficos
   const ini=Math.max(0,i-Math.max(A,24)), fim=Math.min(P.tempos.length,i+Math.max(F,12)+1);
   const lab=P.tempos.slice(ini,fim).map(hh), S=a=>a.slice(ini,fim);
-  const passado=S(eM.map((v,k)=>k<=i?v:null)), futuro=S(eP.map((v,k)=>k>=i?v:null));
-  const linha=(v,c,l)=>({label:l,data:lab.map(()=>v),borderColor:c,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
-  const leit=lab.map(()=>null);P.leituras.forEach(l=>{const j=P.tempos.indexOf(l.t.slice(0,13)+':00');if(j>=ini&&j<fim)leit[j-ini]=+(+l.elevacao_m).toFixed(2)});
-  const agoraPlug={id:'agora',afterDraw(c){const x=c.scales.x.getPixelForValue(i-ini+fr);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='11px system-ui';g.fillText('agora '+P.gerado_em.slice(11,16),x+4,y.top+12);g.restore();}};
+  const agoraPlug={id:'agora',afterDraw(c){const x=c.scales.x.getPixelForValue(i-ini+fr);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='600 11px Montserrat, system-ui';g.fillText('agora',x+4,y.top+12);g.restore();}};
   const CEL=window.matchMedia&&matchMedia('(max-width:600px)').matches, NT=CEL?6:12;
   const base={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{position:CEL?'bottom':'top',labels:{color:css('--tx'),boxWidth:CEL?10:14,padding:CEL?6:10,font:{size:CEL?10:11}}}},
     scales:{x:{ticks:{color:css('--mut'),maxTicksLimit:NT,maxRotation:0,font:{size:10}},grid:{color:css('--bd')}},y:{ticks:{color:css('--mut'),font:{size:CEL?10:12}},grid:{color:css('--bd')}}}};
-  // gráfico de nível: eixo de tempo contínuo (régua oficial a cada 10 min + modelo por hora)
   const tx=k=>Date.parse(P.tempos[k]);
   const ser=(arr,cond)=>{const o=[];for(let k=ini;k<fim;k++){if(cond(k)&&arr[k]!=null)o.push({x:tx(k),y:arr[k]})}return o};
   const xmin=tx(ini), xmax=tx(fim-1), xAgora=Date.parse(P.gerado_em);
@@ -249,37 +320,37 @@ function render(){
   const ultR=regua.length?regua[regua.length-1]:null;
   const leitX=P.leituras.map(l=>({x:Date.parse(l.t),y:+l.elevacao_m})).filter(p=>p.x>=xmin);
   const hl=(v,c,l)=>({label:l,data:[{x:xmin,y:v},{x:xmax,y:v}],borderColor:c,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
-  const agoraT={id:'agoraT',afterDraw(c){const x=c.scales.x.getPixelForValue(xAgora);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='11px system-ui';g.fillText('agora '+P.gerado_em.slice(11,16),x+4,y.top+12);g.restore();}};
+  const agoraT={id:'agoraT',afterDraw(c){const x=c.scales.x.getPixelForValue(xAgora);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='600 11px Montserrat, system-ui';g.fillText('agora '+P.gerado_em.slice(11,16),x+4,y.top+12);g.restore();}};
   const fmtT=v=>{const d=new Date(v);const h=String(d.getHours()).padStart(2,'0')+'h';return CEL?(d.getHours()===0?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'):h):String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+h};
   draw('cNivel','line',{datasets:[
-    {label:'Pior cenário',data:ser(eMax,k=>k>=i),borderColor:'rgba(192,57,43,.5)',backgroundColor:'rgba(31,111,178,.13)',fill:'+1',pointRadius:0,borderWidth:1},
-    {label:'Cenário otimista',data:ser(eMin,k=>k>=i),borderColor:'rgba(31,111,178,.35)',pointRadius:0,borderWidth:1,fill:false},
-    {label:'Régua Ponte Corupá (observado)',data:regua,borderColor:'#1e8449',borderWidth:3,pointRadius:0},
-    {label:'Previsão (média)',data:ser(eP,k=>k>=i),borderColor:css('--azul'),borderWidth:3,borderDash:[7,5],pointRadius:0},
-    {label:'Modelo (passado)',data:ser(eM,k=>k<=i),borderColor:'rgba(31,111,178,.45)',borderWidth:1.5,pointRadius:0},
+    {label:'Pior cenário',data:ser(eMax,k=>k>=i),borderColor:'rgba(244,63,47,.55)',backgroundColor:'rgba(28,109,208,.10)',fill:'+1',pointRadius:0,borderWidth:1},
+    {label:'Cenário otimista',data:ser(eMin,k=>k>=i),borderColor:'rgba(28,109,208,.35)',pointRadius:0,borderWidth:1,fill:false},
+    {label:'Régua (observado)',data:regua,borderColor:css('--regua'),borderWidth:3,pointRadius:0},
+    {label:'Previsão',data:ser(eP,k=>k>=i),borderColor:css('--azul'),borderWidth:3,borderDash:[7,5],pointRadius:0},
+    {label:'Modelo (passado)',data:ser(eM,k=>k<=i),borderColor:'rgba(28,109,208,.35)',borderWidth:1.5,pointRadius:0},
     {label:'Leituras manuais',data:leitX,showLine:false,pointRadius:6,pointBackgroundColor:'#8e44ad',borderColor:'#fff'},
     hl(al.atencao,css('--at'),'Atenção'),hl(al.alerta,css('--al'),'Alerta'),hl(al.transbordamento,css('--tr'),'Alerta máximo')
   ]},{...base,interaction:{mode:'nearest',axis:'x',intersect:false},
-     plugins:{...base.plugins,tooltip:{callbacks:{title:it=>it.length?fmtT(it[0].parsed.x)+':'+String(new Date(it[0].parsed.x).getMinutes()).padStart(2,'0'):''}}},
+     plugins:{...base.plugins,legend:{...base.plugins.legend,labels:{...base.plugins.legend.labels,filter:it=>it.text!=='Leituras manuais'||leitX.length}},
+       tooltip:{callbacks:{title:it=>it.length?fmtT(it[0].parsed.x)+':'+String(new Date(it[0].parsed.x).getMinutes()).padStart(2,'0'):''}}},
      scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{color:css('--mut'),maxTicksLimit:NT,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}},
              y:{...base.scales.y,title:{display:true,text:'régua (m)',color:css('--mut')}}}},[agoraT]);
-  if(ultR) $('notaRegua').innerHTML=`Última leitura da régua: <b>${fmt(ultR.y,2)} m</b> às ${new Date(ultR.x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · equivale a <b>${fmt(ultR.y-r0,2)} m acima do normal</b> (normal = ${fmt(r0,2)} m na régua)`;
+  if(ultR) $('notaRegua').innerHTML=`Última leitura da régua: <b>${fmt(ultR.y,2)} m</b> às ${new Date(ultR.x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}, ou <b>${fmt(ultR.y-r0,2)} m acima do normal</b> (com o rio normal, a régua marca ${fmt(r0,2)} m).`;
   const obsCh=S(P.chuva_modelo.map((v,k)=>k<i?v:null)), prevCh=S(P.chuva_modelo.map((v,k)=>k>=i?v:null));
-  let ac=0;const acumul=S(P.chuva_modelo).map((v,k)=>(ac+=(v||0)));
+  let ac=0;const acumul=S(P.chuva_modelo).map(v=>(ac+=(v||0)));
   draw('cChuva','bar',{labels:lab,datasets:[
-    {label:'Observada (pluviômetros)',data:obsCh,backgroundColor:css('--chuva')},
-    {label:'Prevista (radar + modelos corrigidos)',data:prevCh,backgroundColor:'rgba(74,144,217,.35)',borderColor:css('--chuva'),borderWidth:1},
-    {type:'line',label:'Radar (conferência, mm/h)',data:S(P.chuva_radar||[]),borderColor:'#e67e22',backgroundColor:'#e67e22',borderWidth:2,pointRadius:2,spanGaps:false},
-    {type:'line',label:'Radar: previsão imediata',data:S(P.chuva_radar_prev||[]),borderColor:'#e67e22',borderDash:[4,4],borderWidth:2,pointRadius:0},
-    {type:'line',label:'Acumulada (eixo da direita)',data:acumul,borderColor:'#7f8c8d',borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
+    {label:'Medida',data:obsCh,backgroundColor:css('--chuva'),borderRadius:3},
+    {label:'Prevista',data:prevCh,backgroundColor:'rgba(76,155,232,.35)',borderColor:css('--chuva'),borderWidth:1,borderRadius:3},
+    {type:'line',label:'Radar',data:S(P.chuva_radar||[]),borderColor:'#F47B20',backgroundColor:'#F47B20',borderWidth:2,pointRadius:2,spanGaps:false},
+    {type:'line',label:'Radar: previsão imediata',data:S(P.chuva_radar_prev||[]),borderColor:'#F47B20',borderDash:[4,4],borderWidth:2,pointRadius:0},
+    {type:'line',label:'Acumulada',data:acumul,borderColor:'#8a959c',borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
   ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'mm por hora',color:css('--mut')}},y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'mm acumulados',color:css('--mut')}}}},[agoraPlug]);
   draw('cVazao','line',{labels:lab,datasets:[
-    {label:'Pior',data:S(P.q_prev_max.map((v,k)=>k>=i?v:null)),borderColor:'rgba(192,57,43,.5)',backgroundColor:'rgba(31,111,178,.13)',fill:'+1',pointRadius:0,borderWidth:1},
-    {label:'Otimista',data:S(P.q_prev_min.map((v,k)=>k>=i?v:null)),borderColor:'rgba(31,111,178,.35)',pointRadius:0,borderWidth:1},
-    {label:'Estimada no ponto',data:S(P.q_melhor.map((v,k)=>k<=i?v:null)),borderColor:css('--azul'),borderWidth:3,pointRadius:0},
-    {label:'Prevista',data:S(P.q_prev.map((v,k)=>k>=i?v:null)),borderColor:css('--azul'),borderDash:[7,5],borderWidth:3,pointRadius:0},
-    {label:'Modelo sem correção',data:S(P.q_modelo_sem_assimilacao),borderColor:'#95a5a6',borderWidth:1,pointRadius:0}
-  ]},base,[agoraPlug]);
+    {label:'Pior',data:S(P.q_prev_max.map((v,k)=>k>=i?v:null)),borderColor:'rgba(244,63,47,.55)',backgroundColor:'rgba(28,109,208,.10)',fill:'+1',pointRadius:0,borderWidth:1},
+    {label:'Otimista',data:S(P.q_prev_min.map((v,k)=>k>=i?v:null)),borderColor:'rgba(28,109,208,.35)',pointRadius:0,borderWidth:1},
+    {label:'Estimada',data:S(P.q_melhor.map((v,k)=>k<=i?v:null)),borderColor:css('--regua'),borderWidth:3,pointRadius:0},
+    {label:'Prevista',data:S(P.q_prev.map((v,k)=>k>=i?v:null)),borderColor:css('--azul'),borderDash:[7,5],borderWidth:3,pointRadius:0}
+  ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'m³/s',color:css('--mut')}}}},[agoraPlug]);
   // ----- tempo de resposta: chuva (barras) x régua (linha), picos marcados
   const TR=P.tempo_resposta||{}, ob=TR.observado_hoje, pu=(TR.pulsos||{}).agora;
   {
@@ -289,56 +360,55 @@ function render(){
     const chH=xs.map(k=>P.chuva_obs[k]);
     const kc=ob?P.tempos.indexOf(ob.pico_chuva):-1, kr=ob?P.tempos.indexOf(ob.pico_regua):-1;
     const marca={id:'marca',afterDraw(c){if(kc<h0||kr<h0)return;const g=c.ctx,y=c.chartArea,X=k=>c.scales.x.getPixelForValue(k-h0);
-      g.save();g.font='bold 12px system-ui';
-      [[kc,'#1f6fb2','pico da chuva'],[kr,'#1e8449','pico do rio']].forEach(([k,cor,txt])=>{const x=X(k);g.strokeStyle=cor;g.setLineDash([5,4]);g.lineWidth=2;g.beginPath();g.moveTo(x,y.top+18);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=cor;g.fillText(txt,x+4,y.top+14)});
-      const x1=X(kc),x2=X(kr),yy=y.top+32;g.setLineDash([]);g.strokeStyle='#c0392b';g.lineWidth=2;g.beginPath();g.moveTo(x1,yy);g.lineTo(x2,yy);g.stroke();
-      g.beginPath();g.moveTo(x2,yy);g.lineTo(x2-7,yy-5);g.lineTo(x2-7,yy+5);g.closePath();g.fillStyle='#c0392b';g.fill();
-      g.fillText(fmt(ob.horas,0)+' h de atraso',(x1+x2)/2-30,yy-6);g.restore();}};
+      g.save();g.font='700 12px Montserrat, system-ui';
+      [[kc,css('--azul'),'pico da chuva',12,'right'],[kr,css('--regua'),'pico do rio',28,'left']].forEach(([k,cor,txt,dy,lado])=>{const x=X(k);g.strokeStyle=cor;g.setLineDash([5,4]);g.lineWidth=2;g.beginPath();g.moveTo(x,y.top+dy+4);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=cor;g.textAlign=lado;g.fillText(txt,lado==='right'?x-4:x+4,y.top+dy)});
+      g.textAlign='center';const x1=X(kc),x2=X(kr),yy=y.top+48;g.setLineDash([]);g.strokeStyle='#F43F2F';g.lineWidth=2;g.beginPath();g.moveTo(x1,yy);g.lineTo(x2,yy);g.stroke();
+      g.beginPath();g.moveTo(x2,yy);g.lineTo(x2-7,yy-5);g.lineTo(x2-7,yy+5);g.closePath();g.fillStyle='#F43F2F';g.fill();
+      g.fillText(fmt(ob.horas,0)+' h de atraso',(x1+x2)/2,yy+16);g.restore();}};
     draw('cResp','bar',{labels:lab2,datasets:[
-      {label:'Chuva na bacia (mm/h)',data:chH,backgroundColor:css('--chuva'),yAxisID:'y'},
-      {type:'line',label:'Régua Ponte Corupá (m)',data:regH,borderColor:'#1e8449',borderWidth:3,pointRadius:0,yAxisID:'y2'}]},
+      {label:'Chuva na bacia (mm/h)',data:chH,backgroundColor:css('--chuva'),borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'Régua Ponte Corupá (m)',data:regH,borderColor:css('--regua'),borderWidth:3,pointRadius:0,yAxisID:'y2'}]},
       {...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'chuva (mm/h)',color:css('--mut')}},
         y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'régua (m)',color:css('--mut')}}}},[marca]);
     if(ob){
       const hAgora=+P.gerado_em.slice(11,13), d1=Math.max(1,Math.round(pu?pu.pico_h:1)), d2=Math.max(d1+1,Math.round(ob.horas));
       const hr=h=>String((h+24)%24).padStart(2,'0')+'h';
-      $('trTexto').innerHTML=`Hoje a chuva mais forte caiu às <b>${ob.pico_chuva.slice(11,16)}</b> e a régua chegou ao máximo (<b>${fmt(ob.regua_pico_m,2)} m</b>) às <b>${ob.pico_regua.slice(11,16)}</b>: <b>${fmt(ob.horas,0)} horas depois</b>.<br>
-        ➜ A chuva que está caindo agora (${hr(hAgora)}) deve fazer efeito no rio principalmente <b>entre ${hr(hAgora+d1)} e ${hr(hAgora+d2)}</b>. A chuva da próxima hora, entre ${hr(hAgora+1+d1)} e ${hr(hAgora+1+d2)}.`;
+      $('trTexto').innerHTML=`Hoje a chuva mais forte caiu às <b>${ob.pico_chuva.slice(11,16)}</b> e o rio chegou ao máximo (<b>${fmt(ob.regua_pico_m,2)} m</b>) às <b>${ob.pico_regua.slice(11,16)}</b>: <b>${fmt(ob.horas,0)} horas depois</b>.<br>
+        ➜ A chuva que está caindo agora (${hr(hAgora)}) deve chegar ao rio principalmente <b>entre ${hr(hAgora+d1)} e ${hr(hAgora+d2)}</b>.`;
     }
   }
   if(P.reguas){
-    const cores={corupa:'#1f6fb2',nereu:'#8e44ad',eta:'#e67e22',via_verde:'#c0392b'};
+    const cores={corupa:css('--regua'),nereu:'#8e44ad',eta:'#F47B20',via_verde:'#F43F2F'};
     draw('cReguas','line',{datasets:Object.entries(P.reguas).map(([k,v])=>({label:(P.reguas_nomes[k]||k).replace('Rio Itapocu - ',''),
       data:v.map(([t,n])=>({x:Date.parse(t),y:n})),borderColor:cores[k]||'#555',pointRadius:0,borderWidth:2}))
       .concat([[al.atencao,css('--at')],[al.alerta,css('--al')],[al.transbordamento,css('--tr')]].map(([y,c])=>{const v=Object.values(P.reguas)[0]||[];return{label:'',data:v.length?[{x:Date.parse(v[0][0]),y},{x:Date.parse(v[v.length-1][0]),y}]:[],borderColor:c,borderDash:[6,4],borderWidth:1,pointRadius:0}}))},
-      {...base,interaction:{mode:'nearest',intersect:false},plugins:{...base.plugins,legend:{labels:{...base.plugins.legend.labels,filter:i=>i.text}}},
-       scales:{...base.scales,x:{type:'linear',ticks:{color:css('--mut'),maxTicksLimit:8,callback:v=>{const d=new Date(v);return String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+'h'}},grid:{color:css('--bd')}}}});
+      {...base,interaction:{mode:'nearest',intersect:false},plugins:{...base.plugins,legend:{...base.plugins.legend,labels:{...base.plugins.legend.labels,filter:i=>i.text}}},
+       scales:{...base.scales,x:{type:'linear',ticks:{color:css('--mut'),maxTicksLimit:NT,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}}}});
   }
   // ----- radar
   const R=P.radar;
   if(R){
     $('radarGif').src='/radar.gif?t='+encodeURIComponent(P.gerado_em);
     const dir=['N','NE','L','SE','S','SO','O','NO'][Math.round(R.movimento.para_graus/45)%8];
-    $('radarKpis').innerHTML=[['Chuva agora na bacia (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,`quadro das ${R.ultimo_quadro.slice(11,16)} · viés radar/pluviômetro ${fmt(R.fator_vies,2)}`],
-      ['Movimento das células',R.movimento.km_h>0?`${dir} <small>${fmt(R.movimento.km_h,0)} km/h</small>`:'<small>sem deslocamento definido</small>',R.movimento.km_h>0?'direção para onde a chuva vai':'chuva espalhada: previsão por persistência']]
-      .map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`).join('');
+    $('radarKpis').innerHTML=[['Chuva agora (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,`quadro das ${R.ultimo_quadro.slice(11,16)}`],
+      ['Para onde a chuva vai',R.movimento.km_h>0?`${dir} <small>${fmt(R.movimento.km_h,0)} km/h</small>`:'<small>sem direção definida</small>',R.movimento.km_h>0?'movimento das nuvens de chuva':'chuva espalhada sobre a região']].map(cartao).join('');
   }
-  // ----- tabelas e formulários
+  // ----- fontes e método
   $('tFontes').innerHTML='<tr><th>Fonte</th><th>Status</th><th>Último dado</th></tr>'+Object.entries(P.fontes).map(([n,f])=>`<tr><td>${n}</td><td>${f.ok?'✅ ok':'❌ '+(f.erro||'sem dados')}</td><td>${f.ultima?hh(f.ultima):(f.modelos||[]).join(', ')}</td></tr>`).join('');
   const c=P.config, cal=P.calibracao;
   const cc=c.curva_chave||{}, anc=cal.ancora_leitura, td=cal.tendencia;
   $('metodo').innerHTML=`<b>1. Chuva observada:</b> média ponderada, hora a hora, de ${c.chuva.estacoes.map(e=>e.nome+' (peso '+e.peso+')').join('; ')}. Na hora corrente, entra também o radar.<br>
-  <b>2. Chuva prevista:</b> nas 3 primeiras horas, o radar (chuva atual, deslocada pelo movimento das células) pesa 100%, 70% e 40%. Depois disso, vale a média dos modelos ${c.chuva.modelos_previsao.join(', ')} (Open-Meteo, 4 pontos na bacia), multiplicada pelo erro de cada modelo nas últimas ${c.chuva.horas_vies_previsao||12} h (${Object.entries(cal.vies_previsao_chuva||{}).map(([m,v])=>m.split('_')[0].toUpperCase()+' ×'+fmt(v,1)).join(', ')}). O cenário pessimista usa, em cada hora, o maior valor entre os modelos, +25%.<br>
+  <b>2. Chuva prevista:</b> nas 3 primeiras horas, o radar (chuva atual, deslocada pelo movimento das células) pesa 100%, 70% e 40%. Depois disso, vale a média dos modelos ${c.chuva.modelos_previsao.join(', ')} (Open-Meteo, 4 pontos na bacia), multiplicada pelo erro de cada modelo nas últimas ${c.chuva.horas_vies_previsao||12} h (${Object.entries(cal.vies_previsao_chuva||{}).map(([m,v])=>m.split('_')[0].toUpperCase()+' ×'+fmt(v,1)).join(', ')}). O cenário pessimista usa, em cada hora, o maior valor entre os modelos.<br>
   <b>3. Chuva → vazão:</b> modelo HBV horário (umidade do solo, reservatórios rápido e lento) com propagação pela cascata de Nash, para ${c.ponto.area_km2} km² (Rio Novo + Humboldt). ${c.hbv._calibracao||''}<br>
   <b>4. Vazão → nível:</b> curva-chave Q = ${fmt(cc.K,1)}·(H − ${fmt(cc.H0,2)})<sup>${fmt(cc.n,2)}</sup>, ajustada à régua da Ponte Corupá. ${cc.fonte||''}.<br>
   <b>5. Correção em tempo real:</b> a previsão parte da última leitura da régua${anc?' ('+anc.regua_m.toLocaleString('pt-BR')+' m, '+anc.fonte+')':''}. A diferença entre a régua e o modelo é mantida nas horas seguintes.${td?` Se nas últimas 2 h a régua subiu ou desceu diferente do modelo, essa diferença é projetada nas próximas horas e perde força com o tempo (agora: régua ${td.regua_sobe_m_h>=0?'+':''}${fmt(td.regua_sobe_m_h,2)} m/h; modelo ${td.modelo_sobe_m_h>=0?'+':''}${fmt(td.modelo_sobe_m_h,2)} m/h).`:''}<br>
-  <b>6. Alertas:</b> cotas oficiais da régua da Ponte Corupá (painel do SAMAE e da Defesa Civil de Jaraguá do Sul): atenção ${fmt(al.atencao,1)} m, alerta ${fmt(al.alerta,1)} m, alerta máximo ${fmt(al.transbordamento,1)} m. "Acima do normal" = régua − ${fmt(al.regua_normal_m,2)} m (régua antes da chuva).<br>
-  <b>Limitações:</b> o modelo foi calibrado com uma única cheia (06/10/2026) e poucas horas de régua. Ele trata a bacia como um bloco só, então não separa a onda rápida do Rio Novo da onda mais lenta do Humboldt. Os modelos de chuva subestimaram a tempestade de 06/10 de 2 a 5 vezes. A curva-chave é estimada, porque não há medição de vazão no ponto. Para decidir uma evacuação, use o <b>pior cenário</b>, confira a régua oficial e siga a Defesa Civil (199).`;
+  <b>6. Situação e pior caso:</b> a situação considera o nível agora e o pior caso para daqui 1 hora. Com 12 ou mais previsões já conferidas com a régua, o pior caso passa a ser a previsão mais o erro que só foi superado em 10% das vezes. Cotas oficiais da régua da Ponte Corupá: atenção ${fmt(al.atencao,1)} m, alerta ${fmt(al.alerta,1)} m, alerta máximo ${fmt(al.transbordamento,1)} m. “Acima do normal” = régua − ${fmt(al.regua_normal_m,2)} m.<br>
+  <b>7. Recalibração automática:</b> a cada 6 h o modelo é reajustado com o histórico da régua; os parâmetros novos só entram se o erro cair pelo menos 10%.${cal.auto?` Última tentativa: ${hh(cal.auto.quando)} (erro ${fmt(cal.auto.erro_novo_cm,1)} cm × ${fmt(cal.auto.erro_atual_cm,1)} cm atual; ${cal.auto.aceita?'aceita':'mantidos os parâmetros'}).`:''}<br>
+  <b>Limitações:</b> o modelo foi calibrado com poucas cheias e poucas horas de régua. Ele trata a bacia como um bloco só, então não separa a onda rápida do Rio Novo da onda mais lenta do Humboldt. Os modelos de chuva subestimaram a tempestade de 06/10 de 2 a 5 vezes. A curva-chave é estimada, porque não há medição de vazão no ponto. Em emergência, confira a régua oficial e siga a Defesa Civil (199).`;
 }
 function draw(id,type,data,opt,plugins){if(charts[id])charts[id].destroy();charts[id]=new Chart($(id),{type,data,options:opt,plugins});}
 function avisar(t,m){if(!som)return;try{new Notification(t,{body:m,requireInteraction:true})}catch(e){}
   try{const c=new AudioContext();[0,.35,.7].forEach(d=>{const o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start(c.currentTime+d);o.stop(c.currentTime+d+.25)})}catch(e){}}
-async function post(u,b){await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});setTimeout(carregar,1500);setTimeout(carregar,15000);setTimeout(carregar,40000);}
 $('btnAtual').onclick=async()=>{const r=await fetch('/api/atualizar',{method:'POST'});const j=await r.json().catch(()=>({}));if(!j.ok&&j.erro)alert(j.erro);else{setTimeout(carregar,1500);setTimeout(carregar,40000);}};
 $('btnSom').onclick=async()=>{som=true;try{await Notification.requestPermission()}catch(e){};$('btnSom').textContent='🔔 Aviso ativo';avisar('Teste','Os avisos estão ativos.');};
 $('hAtras').onchange=$('hFrente').onchange=()=>P&&render();

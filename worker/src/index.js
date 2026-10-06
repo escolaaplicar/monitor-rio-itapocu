@@ -6,7 +6,7 @@ const ARQUIVOS = { "/": "/index.html", "/index.html": "/index.html", "/dados.jso
 
 const SEGURANCA = {
   "Content-Security-Policy":
-    "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; " +
+    "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; " +
     "img-src 'self' data: https://escolaaplicar.github.io; connect-src 'self' https://escolaaplicar.github.io https://cloudflareinsights.com; " +
     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   "X-Content-Type-Options": "nosniff",
