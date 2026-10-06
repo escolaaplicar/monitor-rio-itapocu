@@ -32,8 +32,14 @@ def escapar(obj):
 def pagina():
     p = open(os.path.join(APP, "painel.html"), encoding="utf-8").read()
     trocas = [
-        ("fetch('/api/dados',{cache:'no-store'})", "fetch('dados.json?t='+Date.now(),{cache:'no-store'})"),
-        ("'/radar.gif?t='", "'radar.gif?t='"),
+        # dados e radar vêm direto do GitHub Pages (aguenta muito acesso); o Worker só entrega a página.
+        # O parâmetro muda a cada minuto, para os navegadores compartilharem o cache do GitHub.
+        ("const $=id=>", "const DADOS='https://escolaaplicar.github.io/monitor-rio-itapocu/';const $=id=>"),
+        ("fetch('/api/dados',{cache:'no-store'})", "fetch(DADOS+'dados.json?t='+Math.floor(Date.now()/60000))"),
+        ("'/radar.gif?t='", "DADOS+'radar.gif?t='"),
+        ("carregar();setInterval(carregar,30000);",
+         "carregar();setInterval(carregar,300000);"
+         "document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregar()});"),
         ('  <button class="sec" id="btnAtual">Atualizar agora</button>\n', ""),
         ("idade>P.config.atualizacao_min+5", "idade>Math.max(30,P.config.atualizacao_min*3)"),
         ("<title>Monitor Rio Itapocu</title>",
