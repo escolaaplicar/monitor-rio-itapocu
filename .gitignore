@@ -1,0 +1,30 @@
+# --- privado / só no PC
+rio_itapocu/config.local.json
+rio_itapocu/fontes_ciram.py
+# scripts do Windows (caminhos e usuário do PC)
+rio_itapocu/servidor.py
+rio_itapocu/vigia.*
+rio_itapocu/registrar_tarefa.ps1
+rio_itapocu/instalar_vigia.ps1
+rio_itapocu/*.bat
+# --- dados gerados e caches (o histórico da nuvem fica no ramo "estado")
+rio_itapocu/historico_reguas.csv
+rio_itapocu/cache_ana/
+rio_itapocu/cache_radar/
+rio_itapocu/radar_animacao.gif
+rio_itapocu/*.log
+site/
+# --- rascunhos de calibração
+*.pkl
+calib*.json
+calib*.py
+calibra*.py
+hbv_*.json
+pacote_*.json
+__pycache__/
+worker/.wrangler/
+worker/node_modules/
+
+# cache do wrangler (dados da conta Cloudflare)
+.wrangler/
+**/.wrangler/

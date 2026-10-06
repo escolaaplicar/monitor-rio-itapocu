@@ -1,0 +1,12 @@
+name = "nivel-rio-corupa"
+main = "src/index.js"
+compatibility_date = "2026-09-30"
+# sem endereço *.workers.dev: só responde no caminho abaixo
+workers_dev = false
+preview_urls = false
+
+# somente este caminho; o resto do escolaaplicar.com.br continua com o site principal
+routes = [
+  { pattern = "escolaaplicar.com.br/nivel-rio-corupa", zone_name = "escolaaplicar.com.br" },
+  { pattern = "escolaaplicar.com.br/nivel-rio-corupa/*", zone_name = "escolaaplicar.com.br" },
+]

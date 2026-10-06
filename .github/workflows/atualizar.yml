@@ -1,0 +1,68 @@
+name: Atualizar painel do rio
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# padrão: só leitura; o job abaixo pede apenas o necessário
+permissions:
+  contents: read
+
+concurrency:
+  group: atualizar-painel
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write   # gravar o histórico da régua no ramo "estado" deste repositório
+      pages: write      # publicar no GitHub Pages deste repositório
+      id-token: write   # exigido pelo deploy do Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Restaurar histórico (ramo estado)
+        run: |
+          if git fetch --depth=1 origin estado 2>/dev/null; then
+            git --work-tree=rio_itapocu checkout FETCH_HEAD -- . || true
+            git reset -q
+          fi
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Calcular previsão e gerar o site
+        run: python build_site.py
+
+      - name: Guardar histórico da régua (ramo estado)
+        run: |
+          mkdir -p /tmp/estado
+          cp rio_itapocu/historico_reguas.csv /tmp/estado/ 2>/dev/null || true
+          cp -r rio_itapocu/cache_ana /tmp/estado/ 2>/dev/null || true
+          cd /tmp/estado
+          git init -q -b estado
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "estado $(date -u +%Y-%m-%dT%H:%MZ)" || exit 0
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" estado
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

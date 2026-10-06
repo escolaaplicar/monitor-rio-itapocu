@@ -1,0 +1,113 @@
+{
+  "ponto": {
+    "nome": "Rio Itapocu - 250 m a jusante da confluência Rio Novo + Rio Humboldt (Corupá/SC)",
+    "lat": -26.4345,
+    "lon": -49.2305,
+    "area_km2": 400,
+    "area_fonte": "Estimativa: Rio Novo ~200-210 km² + Humboldt ~180-220 km² (ANA 82320000 = 182 km²; 82336000 = 130 km²)"
+  },
+  "alertas": {
+    "unidade": "regua",
+    "atencao": 2.4,
+    "alerta": 3.5,
+    "transbordamento": 5.0,
+    "regua_normal_m": 0.4,
+    "fonte_cotas": "Cotas do painel oficial SAMAE/Defesa Civil de Jaraguá do Sul para a régua da Ponte Corupá: normalidade até 2,39 m, atenção 2,4 m, alerta 3,5 m, alerta máximo 5,0 m. Nível normal (0,40 m) = régua antes da chuva de 05/10.",
+    "horizonte_alerta_h": 1,
+    "notificacao_windows": false,
+    "ntfy_topico": ""
+  },
+  "chuva": {
+    "estacoes": [
+      {
+        "fonte": "cemaden",
+        "id": 6925,
+        "nome": "CEMADEN Corupá - João Tozini (confluência)",
+        "peso": 0.55
+      },
+      {
+        "fonte": "ana",
+        "id": "82336000",
+        "nome": "ANA 82336000 Rio Humboldt (Rabo do Macaco)",
+        "peso": 0.45
+      }
+    ],
+    "pontos_previsao": [
+      [
+        -26.43,
+        -49.23
+      ],
+      [
+        -26.4,
+        -49.36
+      ],
+      [
+        -26.33,
+        -49.29
+      ],
+      [
+        -26.37,
+        -49.2
+      ]
+    ],
+    "modelos_previsao": [
+      "ecmwf_ifs025",
+      "gfs_seamless",
+      "icon_seamless"
+    ],
+    "fator_previsao": 1.0,
+    "corrigir_vies_previsao": true,
+    "horas_vies_previsao": 12,
+    "tau_vies_previsao_h": 18
+  },
+  "hbv": {
+    "fc": 265.20025,
+    "beta": 3.03353,
+    "lp": 0.2,
+    "pet_mm_dia": 3.0,
+    "k0": 0.9,
+    "k1": 0.12577,
+    "k2": 0.00604,
+    "uzl": 5.98811,
+    "perc": 0.65349,
+    "sm_ini": 0.57561,
+    "lz_ini": 35.1132,
+    "nash_n": 3,
+    "nash_k": 1.08003,
+    "dias_aquecimento": 14,
+    "_calibracao": "Calibrado em 06/10/2026 18h45 direto contra a régua SAMAE da Ponte Corupá (leituras de 1 min, cheia de 06/10) e a vazão da ANA 82336000 (peso menor). Erro médio da régua: 16 cm. Calibrado num único evento."
+  },
+  "calibracao": {
+    "estacao_ana": "82336000",
+    "estacao_ana_nome": "ANA 82336000 PCH Rabo do Macaco Jusante - Rio Humboldt",
+    "area_ana_km2": 130,
+    "horas_calibracao": 96,
+    "tau_assimilacao_h": 48,
+    "estacoes_info": [
+      {
+        "codigo": "82338000",
+        "nome": "ANA 82338000 CGH Ano Bom Jusante - Rio Ano Bom"
+      }
+    ]
+  },
+  "canal": {
+    "largura_fundo_m": 35,
+    "talude_z": 2.0,
+    "manning_n": 0.04,
+    "declividade": 0.002,
+    "fator_conducao": 1.0,
+    "vazao_normal_m3s": 14.0,
+    "fonte": "Largura 30-45 m (imagem de satélite); n 0,035-0,045 leito de seixos; declividade 0,002-0,004 (saída da Serra do Mar). Vazão normal = Q média escalada de ANA 82320000 (6,56 m³/s em 182 km²) para 400 km²"
+  },
+  "atualizacao_min": 10,
+  "curva_chave": {
+    "K": 27.2999,
+    "H0": -0.3179,
+    "n": 1.7682,
+    "fonte": "Q = K·(H − H0)^n ajustada em 06/10/2026 com a régua SAMAE da Ponte Corupá e o modelo hidrológico (não há medição de vazão no ponto: é estimativa)"
+  },
+  "regua": {
+    "chave": "corupa",
+    "nome": "Régua SAMAE/Defesa Civil - Ponte Corupá (Rua Roberto Seidel)"
+  }
+}
