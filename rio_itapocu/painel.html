@@ -7,7 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js" integrity="sha512-FRGbE3pigbYamZnw4+uT4t63+QJOfg4MXSgzPn2t8AWg9ofmFvZ/0Z37ZpCawjfXLBSVX2p2CncsmUH2hzsgJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 /* Identidade visual Aplicar (design system APL9): Montserrat, verde #20BC66, coral #F43F2F, petróleo #051924 */
 :root{--bg:#FAFAFA;--card:#fff;--tx:#051924;--mut:#5f6b73;--bd:#E6E6E6;--suave:#F5F5F5;
@@ -71,6 +73,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;borde
 th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .fontes h3{font-size:14.5px;font-weight:700;margin:16px 0 6px}.fontes ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.6}
 .fontes td,.fontes th{font-size:12.5px}
+.zbar{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}
+.zbar span{margin-right:auto;font-size:11.5px;color:var(--mut)}
+.zbar button{padding:4px 11px;font-size:14px;font-weight:700;border-radius:9px;border:1px solid var(--bd);background:var(--suave);color:var(--tx);min-width:36px}
+.zbar button.r{font-size:12px;font-weight:600}
 details summary{cursor:pointer;color:var(--mut);font-size:12.5px;margin-top:8px}
 footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
 @media(max-width:980px){.hero{grid-template-columns:1fr}.quatro{grid-template-columns:repeat(2,1fr)}}
@@ -406,7 +412,38 @@ function render(){
   <b>7. Recalibração automática:</b> a cada 6 h o modelo é reajustado com o histórico da régua; os parâmetros novos só entram se o erro cair pelo menos 10%.${cal.auto?` Última tentativa: ${hh(cal.auto.quando)} (erro ${fmt(cal.auto.erro_novo_cm,1)} cm × ${fmt(cal.auto.erro_atual_cm,1)} cm atual; ${cal.auto.aceita?'aceita':'mantidos os parâmetros'}).`:''}<br>
   <b>Limitações:</b> o modelo foi calibrado com poucas cheias e poucas horas de régua. Ele trata a bacia como um bloco só, então não separa a onda rápida do Rio Novo da onda mais lenta do Humboldt. Os modelos de chuva subestimaram a tempestade de 06/10 de 2 a 5 vezes. A curva-chave é estimada, porque não há medição de vazão no ponto. Em emergência, confira a régua oficial e siga a Defesa Civil (199).`;
 }
-function draw(id,type,data,opt,plugins){if(charts[id])charts[id].destroy();charts[id]=new Chart($(id),{type,data,options:opt,plugins});}
+// ----- zoom nos gráficos (chartjs-plugin-zoom): botões + pinça no celular + Ctrl+rolagem no computador
+if(window.Chart&&window.ChartZoom){try{Chart.register(window.ChartZoom)}catch(e){}}
+const ZOOM=['cNivel','cChuva','cVazao','cResp','cReguas'];
+function barraZoom(id){
+  const cv=$(id), ch=cv.parentElement, box=ch.parentElement;
+  if(box.querySelector('.zbar[data-g="'+id+'"]'))return;
+  const b=document.createElement('div');b.className='zbar';b.dataset.g=id;
+  const toque=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+  b.innerHTML=`<span>${toque?'Aproxime com dois dedos e arraste para os lados':'Ctrl + rolagem do mouse para aproximar · arraste para os lados'}</span><button title="Aproximar">＋</button><button title="Afastar">－</button><button class="r" title="Mostrar o período todo">↺ ver tudo</button>`;
+  const [mais,menos,tudo]=b.querySelectorAll('button');
+  mais.onclick=()=>charts[id]&&charts[id].zoom(1.5);
+  menos.onclick=()=>charts[id]&&charts[id].zoom(0.67);
+  tudo.onclick=()=>charts[id]&&charts[id].resetZoom();
+  box.insertBefore(b,ch);
+}
+function draw(id,type,data,opt,plugins){
+  let salvo=null;
+  if(charts[id]){const c=charts[id];
+    try{if(c.isZoomedOrPanned&&c.isZoomedOrPanned())salvo={min:c.scales.x.min,max:c.scales.x.max}}catch(e){}
+    c.destroy();}
+  if(ZOOM.includes(id)&&window.ChartZoom){
+    opt={...opt,plugins:{...(opt.plugins||{}),zoom:{
+      pan:{enabled:true,mode:'x'},
+      zoom:{wheel:{enabled:true,modifierKey:'ctrl'},pinch:{enabled:true},mode:'x'},
+      limits:{x:{min:'original',max:'original'}}}}};
+  }
+  charts[id]=new Chart($(id),{type,data,options:opt,plugins});
+  if(ZOOM.includes(id)&&window.ChartZoom){
+    barraZoom(id);
+    if(salvo){try{charts[id].zoomScale('x',salvo,'none')}catch(e){}}
+  }
+}
 function avisar(t,m){if(!som)return;try{new Notification(t,{body:m,requireInteraction:true})}catch(e){}
   try{const c=new AudioContext();[0,.35,.7].forEach(d=>{const o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start(c.currentTime+d);o.stop(c.currentTime+d+.25)})}catch(e){}}
 $('btnAtual').onclick=async()=>{const r=await fetch('/api/atualizar',{method:'POST'});const j=await r.json().catch(()=>({}));if(!j.ok&&j.erro)alert(j.erro);else{setTimeout(carregar,1500);setTimeout(carregar,40000);}};
