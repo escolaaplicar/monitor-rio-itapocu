@@ -27,10 +27,11 @@ export default {
     const arquivo = ARQUIVOS[url.pathname.slice(BASE.length)];
     if (!arquivo) return new Response("Não encontrado", { status: 404 });
 
-    const html = arquivo === "/index.html";
-    const ttl = html ? 300 : 60;
-    // cache na borda da Cloudflare: o GitHub recebe no máximo 1 pedido por arquivo a cada 1-5 min por região
-    const r = await fetch(ORIGEM + arquivo, { cf: { cacheTtl: ttl, cacheEverything: true } });
+    const ttl = 60;
+    // cache de 1 min na borda da Cloudflare. O parâmetro "v" muda a cada minuto para não pegar
+    // a cópia antiga que o próprio GitHub Pages guarda por até 10 min.
+    const v = Math.floor(Date.now() / 60000);
+    const r = await fetch(ORIGEM + arquivo + "?v=" + v, { cf: { cacheTtl: ttl, cacheEverything: true } });
     if (!r.ok) return new Response("Painel indisponível no momento. Tente em alguns minutos.", { status: 502 });
 
     const h = new Headers(SEGURANCA);
