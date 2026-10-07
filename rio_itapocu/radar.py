@@ -24,6 +24,7 @@ BASE = "https://sifap.defesacivil.sc.gov.br/radarsc/rest/radar/"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(AQUI, "cache_radar")
 GIF = os.path.join(AQUI, "radar_animacao.gif")
+QUADROS = os.path.join(AQUI, "radar_quadros.png")  # todos os quadros empilhados (o painel mostra um por vez)
 EXT = (-58.0651279, -33.8163446, -46.4999942, -24.7653703)  # lon0, lat0, lon1, lat1 (mosaico COMP)
 W, H = 920, 719
 
@@ -208,7 +209,10 @@ def processar(horas=6, horas_prev=3, chuva_pluvio=None):
         prev_hor.setdefault(k, []).append(v)
     prev_hor = {k: fator * sum(v) / 6 for k, v in prev_hor.items()}  # mm acumulados em cada hora
 
-    _gif(campos[-12:], (vx, vy), t_ult)
+    quadros = _gif(campos[-12:], (vx, vy), t_ult)
+    # legenda: cada cor do radar convertida em mm/h (Marshall-Palmer) e ajustada aos pluviômetros
+    legenda = [{"cor": "#%02x%02x%02x" % c, "dbz": d, "mm_h": round(dbz_para_mm(d) * fator, 1)}
+               for c, d in sorted(COR_DBZ.items(), key=lambda x: x[1]) if dbz_para_mm(d) > 0]
     km_h = math.hypot(vx * 1.26, vy * 1.40) * 6
     direcao = (math.degrees(math.atan2(vx, -vy)) + 360) % 360  # para onde vai (0 = norte)
     return {
@@ -220,6 +224,8 @@ def processar(horas=6, horas_prev=3, chuva_pluvio=None):
         "previsao10": [(t.strftime("%Y-%m-%dT%H:%M"), round(v * fator, 2)) for t, v in prev10],
         "movimento": {"km_h": round(km_h, 1), "para_graus": round(direcao)},
         "taxa_atual_mm_h": round(serie10[-1][1] * fator, 1),
+        "quadros": quadros,
+        "legenda": legenda,
     }
 
 
@@ -264,3 +270,11 @@ def _gif(campos, vel, t_ult):
         frames.append(base(img, f"PREVISÃO ({modo})  {t_ult + dt.timedelta(minutes=10 * p):%H:%M}", prev=True))
     dur = [400] * (len(frames) - 1) + [1500]
     frames[0].save(GIF, save_all=True, append_images=frames[1:], duration=dur, loop=0)
+    # tira vertical com todos os quadros, em paleta reduzida (arquivo pequeno); o painel navega por ela
+    w, h = frames[0].size
+    tira = Image.new("RGB", (w, h * len(frames)), fundo)
+    for k, f in enumerate(frames):
+        tira.paste(f, (0, k * h))
+    tira.quantize(colors=96, method=Image.Quantize.MEDIANCUT).save(QUADROS, optimize=True)
+    rotulos = [f"{t:%H:%M}" for t, _, _ in campos] + [f"{t_ult + dt.timedelta(minutes=10 * p):%H:%M}" for p in (1, 2, 3, 4, 5, 6)]
+    return {"n": len(frames), "observados": len(campos), "rotulos": rotulos, "largura": w, "altura": h}

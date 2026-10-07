@@ -77,6 +77,14 @@ th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)
 .zbar span{margin-right:auto;font-size:11.5px;color:var(--mut)}
 .zbar button{padding:4px 11px;font-size:14px;font-weight:700;border-radius:9px;border:1px solid var(--bd);background:var(--suave);color:var(--tx);min-width:36px}
 .zbar button.r{font-size:12px;font-weight:600}
+#radarTela{width:100%;border-radius:10px;background-repeat:no-repeat;image-rendering:pixelated;background-color:var(--suave)}
+.rctl{display:flex;align-items:center;gap:6px;margin-top:8px}
+.rctl button{padding:5px 10px;border-radius:9px;border:1px solid var(--bd);background:var(--suave);color:var(--tx);font-size:14px;min-width:38px}
+.rctl input{flex:1;accent-color:var(--verde)}
+.rctl span{font-size:12.5px;font-weight:700;min-width:118px;text-align:right;font-variant-numeric:tabular-nums}
+#radarLeg{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:10px;font-size:11.5px;color:var(--mut);align-items:center;justify-content:center}
+#radarLeg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:-2px;border:1px solid rgba(0,0,0,.15)}
+#radarLeg b{width:100%;text-align:center;color:var(--tx);font-size:11.5px;font-weight:600}
 details summary{cursor:pointer;color:var(--mut);font-size:12.5px;margin-top:8px}
 footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
 @media(max-width:980px){.hero{grid-template-columns:1fr}.quatro{grid-template-columns:repeat(2,1fr)}}
@@ -143,7 +151,12 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
   <div class="ch s" style="margin-top:10px;height:260px"><canvas id="cResp"></canvas></div>
   <div class="aviso">Barras: chuva por hora na bacia. Linha verde: régua da Ponte Corupá. A seta mostra o atraso entre o pico da chuva e o pico do rio.</div></div></div>
  <div><h2>Radar: onde está chovendo agora</h2>
-  <div class="card" style="text-align:center"><img id="radarGif" alt="animação do radar meteorológico sobre a bacia" style="max-width:100%;image-rendering:pixelated;border-radius:10px">
+  <div class="card" style="text-align:center">
+  <div id="radarTela" role="img" aria-label="radar meteorológico sobre a bacia"></div>
+  <div class="rctl"><button id="rPlay" title="Pausar / tocar">⏸</button><button id="rAnt" title="Quadro anterior">◀</button>
+   <input type="range" id="rPos" min="0" max="0" value="0" aria-label="escolher o horário do radar"><button id="rProx" title="Próximo quadro">▶</button>
+   <span id="rHora"></span></div>
+  <div id="radarLeg"></div>
   <div class="grid" id="radarKpis" style="grid-template-columns:1fr 1fr;margin-top:10px;text-align:left"></div>
   <div class="aviso" style="text-align:left;margin-top:8px">Radar da Defesa Civil SC (mosaico C-MAX). Contorno preto: bacia do Rio Novo e do Rio Humboldt. Cor convertida em chuva pela relação de Marshall-Palmer (Z = 200·R<sup>1,6</sup>) e ajustada aos pluviômetros. Nas próximas 3 h, o radar pesa 100%, 70% e 40% na chuva usada na previsão.</div></div></div>
 </div>
@@ -394,7 +407,7 @@ function render(){
   // ----- radar
   const R=P.radar;
   if(R){
-    $('radarGif').src='/radar.gif?t='+encodeURIComponent(P.gerado_em);
+    radarPlayer(R);
     const dir=['N','NE','L','SE','S','SO','O','NO'][Math.round(R.movimento.para_graus/45)%8];
     $('radarKpis').innerHTML=[['Chuva agora (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,`quadro das ${R.ultimo_quadro.slice(11,16)}`],
       ['Para onde a chuva vai',R.movimento.km_h>0?`${dir} <small>${fmt(R.movimento.km_h,0)} km/h</small>`:'<small>sem direção definida</small>',R.movimento.km_h>0?'movimento das nuvens de chuva':'chuva espalhada sobre a região']].map(cartao).join('');
@@ -412,6 +425,28 @@ function render(){
   <b>7. Recalibração automática:</b> a cada 6 h o modelo é reajustado com o histórico da régua; os parâmetros novos só entram se o erro cair pelo menos 10%.${cal.auto?` Última tentativa: ${hh(cal.auto.quando)} (erro ${fmt(cal.auto.erro_novo_cm,1)} cm × ${fmt(cal.auto.erro_atual_cm,1)} cm atual; ${cal.auto.aceita?'aceita':'mantidos os parâmetros'}).`:''}<br>
   <b>Limitações:</b> o modelo foi calibrado com poucas cheias e poucas horas de régua. Ele trata a bacia como um bloco só, então não separa a onda rápida do Rio Novo da onda mais lenta do Humboldt. Os modelos de chuva subestimaram a tempestade de 06/10 de 2 a 5 vezes. A curva-chave é estimada, porque não há medição de vazão no ponto. Em emergência, confira a régua oficial e siga a Defesa Civil (199).`;
 }
+// ----- radar: reprodutor de quadros (tocar, pausar, navegar) + legenda em mm/h
+const RP={k:0,tocando:true,timer:null,q:null,url:''};
+function radarMostra(){const q=RP.q;if(!q)return;const t=$('radarTela');
+  t.style.backgroundPosition='0 '+(q.n>1?RP.k/(q.n-1)*100:0)+'%';
+  $('rPos').value=RP.k;const prev=RP.k>=q.observados;
+  $('rHora').innerHTML=(prev?'<span style="color:var(--al)">previsão</span> ':'')+q.rotulos[RP.k];}
+function radarTique(){if(!RP.q)return;RP.k=(RP.k+1)%RP.q.n;radarMostra();clearTimeout(RP.timer);
+  if(RP.tocando)RP.timer=setTimeout(radarTique,RP.k===RP.q.n-1?1500:450);}
+function radarPlayer(R){const q=R.quadros;if(!q)return;
+  const url='/radar_quadros.png?t='+encodeURIComponent(P.gerado_em);
+  const t=$('radarTela');
+  if(RP.url!==url){RP.url=url;t.style.backgroundImage=`url("${url}")`;}
+  t.style.backgroundSize=`100% ${q.n*100}%`;t.style.aspectRatio=`${q.largura} / ${q.altura}`;
+  const novo=!RP.q||RP.q.n!==q.n;RP.q=q;$('rPos').max=q.n-1;
+  if(novo){RP.k=RP.tocando?0:q.observados-1;}
+  radarMostra();if(RP.tocando&&!RP.timer)RP.timer=setTimeout(radarTique,450);
+  if(R.legenda)$('radarLeg').innerHTML='<b>Chuva estimada pelo radar (mm por hora)</b>'+R.legenda.map(l=>`<span><i style="background:${l.cor}"></i>${l.mm_h<10?fmt(l.mm_h,1):fmt(l.mm_h,0)}</span>`).join('');}
+$('rPlay').onclick=()=>{RP.tocando=!RP.tocando;$('rPlay').textContent=RP.tocando?'⏸':'▶';clearTimeout(RP.timer);RP.timer=null;if(RP.tocando)radarTique();};
+const rParar=()=>{RP.tocando=false;$('rPlay').textContent='▶';clearTimeout(RP.timer);RP.timer=null;};
+$('rAnt').onclick=()=>{if(!RP.q)return;rParar();RP.k=(RP.k-1+RP.q.n)%RP.q.n;radarMostra();};
+$('rProx').onclick=()=>{if(!RP.q)return;rParar();RP.k=(RP.k+1)%RP.q.n;radarMostra();};
+$('rPos').oninput=e=>{rParar();RP.k=+e.target.value;radarMostra();};
 // ----- zoom nos gráficos (chartjs-plugin-zoom): botões + pinça no celular + Ctrl+rolagem no computador
 if(window.Chart&&window.ChartZoom){try{Chart.register(window.ChartZoom)}catch(e){}}
 const ZOOM=['cNivel','cChuva','cVazao','cResp','cReguas'];

@@ -488,7 +488,8 @@ def rodar(registrar_previsao=True):
         "radar": None if not radar_info else {
             "ultimo_quadro": radar_info["ultimo_quadro"], "fator_vies": radar_info["fator_vies"],
             "movimento": radar_info["movimento"], "taxa_atual_mm_h": radar_info["taxa_atual_mm_h"],
-            "serie10": radar_info["serie10"], "previsao10": radar_info["previsao10"]},
+            "serie10": radar_info["serie10"], "previsao10": radar_info["previsao10"],
+            "quadros": radar_info.get("quadros"), "legenda": radar_info.get("legenda")},
         "chuva_modelo": r(cenarios["media"]),
         "q_melhor": r(q_melhor, 1),
         "q_prev": r(q_cen["media"], 1),

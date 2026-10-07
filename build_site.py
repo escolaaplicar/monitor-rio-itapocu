@@ -36,7 +36,7 @@ def pagina():
         # O parâmetro muda a cada minuto, para os navegadores compartilharem o cache do GitHub.
         ("const $=id=>", "const DADOS='https://escolaaplicar.github.io/monitor-rio-itapocu/';const $=id=>"),
         ("fetch('/api/dados',{cache:'no-store'})", "fetch(DADOS+'dados.json?t='+Math.floor(Date.now()/60000))"),
-        ("'/radar.gif?t='", "DADOS+'radar.gif?t='"),
+        ("'/radar_quadros.png?t='", "DADOS+'radar_quadros.png?t='"),
         ("carregar();setInterval(carregar,30000);",
          "carregar();setInterval(carregar,300000);"
          "document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregar()});"),
@@ -70,6 +70,9 @@ def main():
     gif = os.path.join(APP, "radar_animacao.gif")
     if os.path.exists(gif):
         shutil.copy(gif, os.path.join(SITE, "radar.gif"))
+    tira = os.path.join(APP, "radar_quadros.png")
+    if os.path.exists(tira):
+        shutil.copy(tira, os.path.join(SITE, "radar_quadros.png"))
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(pagina())
     open(os.path.join(SITE, ".nojekyll"), "w").close()
