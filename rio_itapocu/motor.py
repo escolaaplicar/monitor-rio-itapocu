@@ -111,12 +111,15 @@ def rodar(registrar_previsao=True):
                     continue
                 s = fontes.ciram_horario(e["id"], t0, agora)
             elif e["fonte"] == "ana":
-                s = {}
+                s, n_leit = {}, {}
                 for l in obs_ana.get(str(e["id"])) or fontes.ana_telemetria(str(e["id"]), t0, agora):
                     c = l["chuva"]
                     if c is not None and 0 <= c <= 40:  # descarta leituras de contador corrompidas
                         k = fontes.hora_cheia(l["t"])
                         s[k] = round(s.get(k, 0) + c, 2)
+                        n_leit[k] = n_leit.get(k, 0) + 1
+                # a ANA lê a cada 30 min: hora com uma leitura só ainda está incompleta e subestimaria a chuva
+                s = {k: v for k, v in s.items() if n_leit.get(k, 0) >= 2}
             else:
                 s, _ = fontes.cemaden_horario(e["id"], 96)
             chuva_est[e["nome"]] = s
@@ -144,8 +147,15 @@ def rodar(registrar_previsao=True):
             rt = fontes.cemaden_tempo_real(id_cem)
             if rt and agora - rt[0] <= dt.timedelta(minutes=25):
                 chuva_tr = {"t": _iso(rt[0]), "mm_ultima_hora": rt[1]}
-                if chuva_obs[i_agora] is None or rt[1] > chuva_obs[i_agora]:
-                    chuva_obs[i_agora] = rt[1]  # taxa da última hora, usada como estimativa da hora atual
+                # o acumulado cobre os 60 min anteriores à leitura: vai para a hora que contém o meio desse intervalo
+                k_tr = fontes.hora_cheia(rt[0] - dt.timedelta(minutes=30))
+                if k_tr in tempos:
+                    j_tr = tempos.index(k_tr)
+                    if chuva_obs[j_tr] is None:  # se o total horário oficial já saiu, ele prevalece
+                        chuva_obs[j_tr] = rt[1]
+                    chuva_tr["hora"] = _iso(k_tr)
+                if chuva_obs[i_agora] is None:
+                    chuva_obs[i_agora] = rt[1]  # hora atual ainda sem medição: a última hora serve de estimativa
         except Exception as ex:  # noqa: BLE001
             erros.append(f"CEMADEN tempo real: {ex}")
 
