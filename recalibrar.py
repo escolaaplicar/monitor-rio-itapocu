@@ -27,7 +27,17 @@ FAIXAS_HBV = {"fc": (40, 400), "beta": (0.5, 5), "lp": (0.2, 1), "k0": (0.05, 0.
 FAIXAS_CURVA = {"K": (3, 200), "H0": (-0.6, 0.35), "n": (1.3, 2.8)}
 
 
-def main(iteracoes=4000):
+def main(iteracoes=4000, intervalo_h=6):
+    # roda no máximo a cada 6 h, não importa quem disparou a atualização
+    if os.path.exists(SAIDA):
+        try:
+            ultima = json.load(open(SAIDA, encoding="utf-8")).get("resumo", {}).get("quando")
+            agora_l = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(hours=3)
+            if ultima and agora_l - dt.datetime.fromisoformat(ultima) < dt.timedelta(hours=intervalo_h):
+                print(f"última recalibração às {ultima}; próxima só depois de {intervalo_h} h")
+                return
+        except (ValueError, OSError):
+            pass
     pk = motor.rodar(registrar_previsao=False)
     cfg = motor.carregar_config()
     i = pk["i_agora"]

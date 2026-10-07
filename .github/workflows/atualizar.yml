@@ -43,8 +43,7 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Recalibrar o modelo com o histórico da régua (a cada 6 h)
-        if: github.event.schedule == '5 */6 * * *' || github.event_name == 'workflow_dispatch'
+      - name: Recalibrar o modelo com o histórico da régua (o script limita a 1 vez a cada 6 h)
         run: python recalibrar.py
 
       - name: Calcular previsão e gerar o site
