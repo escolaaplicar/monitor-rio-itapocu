@@ -38,7 +38,7 @@ def pagina():
         ("fetch('/api/dados',{cache:'no-store'})", "fetch(DADOS+'dados.json?t='+Math.floor(Date.now()/60000))"),
         ("'/radar_quadros.png?t='", "DADOS+'radar_quadros.png?t='"),
         ("carregar();setInterval(carregar,30000);",
-         "carregar();setInterval(carregar,300000);"
+         "carregar();setInterval(()=>{if(!document.hidden)carregar()},120000);"
          "document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregar()});"),
         ('  <button class="sec" id="btnAtual">Atualizar agora</button>\n', ""),
         ("idade>P.config.atualizacao_min+5", "idade>Math.max(30,P.config.atualizacao_min*3)"),
