@@ -138,13 +138,27 @@ def rodar(registrar_previsao=True):
 
     # ---------------------------------------------------------------- previsão
     fp = cfg["chuva"].get("fator_previsao", 1.0)
-    try:
-        prev = fontes.openmeteo_previsao(cfg["chuva"]["pontos_previsao"], cfg["chuva"]["modelos_previsao"])
+    cache_prev = os.path.join(AQUI, "cache_previsao.json")
+    prev, erro_prev = {}, None
+    for tentativa in range(2):
+        try:
+            prev = fontes.openmeteo_previsao(cfg["chuva"]["pontos_previsao"], cfg["chuva"]["modelos_previsao"])
+            break
+        except Exception as ex:  # noqa: BLE001
+            erro_prev = ex
+    if prev:
         fontes_ok["Open-Meteo"] = {"ok": True, "modelos": list(prev)}
-    except Exception as ex:  # noqa: BLE001
-        prev = {}
-        erros.append(f"Open-Meteo: {ex}")
-        fontes_ok["Open-Meteo"] = {"ok": False, "erro": str(ex)[:200]}
+        with open(cache_prev, "w", encoding="utf-8") as f:
+            json.dump({"t": _iso(agora), "prev": {m: {_iso(t): v for t, v in s_.items()} for m, s_ in prev.items()}}, f)
+    else:
+        erros.append(f"Open-Meteo: {erro_prev}")
+        fontes_ok["Open-Meteo"] = {"ok": False, "erro": str(erro_prev)[:200]}
+        if os.path.exists(cache_prev):  # usa a última previsão recebida, se tiver menos de 6 h
+            with open(cache_prev, encoding="utf-8") as f:
+                c_ = json.load(f)
+            if agora - dt.datetime.fromisoformat(c_["t"]) <= dt.timedelta(hours=6):
+                prev = {m: {dt.datetime.fromisoformat(t): v for t, v in s_.items()} for m, s_ in c_["prev"].items()}
+                fontes_ok["Open-Meteo"]["erro"] = f"sem resposta; usando a previsão recebida às {c_['t'][11:16]}"
     modelos = list(prev)
     vies_prev = {}
     if cfg["chuva"].get("corrigir_vies_previsao", True):
@@ -207,17 +221,29 @@ def rodar(registrar_previsao=True):
             if rv is None:
                 continue
             for fonte_prev in [prev_media, prev_pess] + [prev[m] for m in modelos]:
-                if t in fonte_prev:
-                    fonte_prev[t] = w * rv + (1 - w) * fonte_prev[t]
+                fonte_prev[t] = w * rv + (1 - w) * fonte_prev.get(t, rv)
     except Exception as ex:  # noqa: BLE001
         erros.append(f"Radar: {ex}")
         fontes_ok["Radar Defesa Civil SC (mosaico C-MAX)"] = {"ok": False, "erro": str(ex)[:200]}
 
+    # Persistência: média da chuva medida nas últimas 3 horas (e radar agora), decaindo com o tempo.
+    # O cenário pessimista nunca assume menos chuva que isso; sem nenhuma previsão, a média também usa.
+    recentes = [chuva_obs[k] for k in range(max(0, i_agora - 3), i_agora) if chuva_obs[k] is not None]
+    taxa_rec = sum(recentes) / len(recentes) if recentes else 0.0
+    if radar_info:
+        taxa_rec = max(taxa_rec, radar_info.get("taxa_atual_mm_h") or 0.0)
+    persistencia = {}
+    for k in range(0, 12):
+        t = h_atual + k * H
+        persistencia[t] = taxa_rec * math.exp(-k / 4)
+        prev_pess[t] = max(prev_pess.get(t, 0.0), persistencia[t])
+        if not modelos:
+            prev_media[t] = max(prev_media.get(t, 0.0), taxa_rec * math.exp(-k / 2.5))
+
     cenarios = {"media": serie_chuva(prev_media)}
     for m in modelos:
         cenarios[m] = serie_chuva(prev[m])
-    if modelos:
-        cenarios["pessimista"] = serie_chuva(prev_pess)
+    cenarios["pessimista"] = serie_chuva(prev_pess)
 
     # ---------------------------------------------------------------- vazões observadas (ANA)
     q_ref_h = _horario_medio(obs_ana.get(cal["estacao_ana"], []), "vazao")
@@ -382,7 +408,7 @@ def rodar(registrar_previsao=True):
     # ---------------------------------------------------------------- recorte para o painel
     ini = max(0, i_agora - 7 * 24)
     sl = slice(ini, len(tempos))
-    nomes_mod = [m for m in modelos] + (["pessimista"] if modelos else [])
+    nomes_mod = [m for m in modelos] + ["pessimista"]
     fut = range(i_agora, len(tempos))
     faixa_min = [min(elev_cen[m][i] for m in nomes_mod) if nomes_mod else elev_cen["media"][i] for i in range(len(tempos))]
     faixa_max = [max(elev_cen[m][i] for m in nomes_mod) if nomes_mod else elev_cen["media"][i] for i in range(len(tempos))]
@@ -404,6 +430,9 @@ def rodar(registrar_previsao=True):
         return "normal"
     fr = agora.minute / 60
     reg_atual = elev_melhor[i_agora] * (1 - fr) + elev_cen["media"][min(i_agora + 1, len(tempos) - 1)] * fr + reg0
+    ult_leit = (reguas.get(chave_r) or [None])[-1] if cc else None
+    if ult_leit and agora - ult_leit[0] <= dt.timedelta(minutes=20):
+        reg_atual = ult_leit[1]
     janela = range(i_agora, min(i_agora + hz + 1, len(tempos)))
     pico_i = max(janela, key=lambda i: elev_cen["media"][i])
     reg_pico = elev_cen["media"][pico_i] + reg0
@@ -483,10 +512,12 @@ def rodar(registrar_previsao=True):
         "chuva_prev": {m: r([prev[m].get(t) for t in tempos]) for m in modelos},
         "chuva_prev_media": r([prev_media.get(t) for t in tempos]),
         "chuva_prev_pessimista": r([prev_pess.get(t) for t in tempos]),
+        "chuva_persistencia_mm_h": round(taxa_rec, 2),
         "chuva_radar": r([radar_info["horario"].get(t) if radar_info else None for t in tempos]),
         "chuva_radar_prev": r([radar_info["previsao_horaria"].get(t) if radar_info else None for t in tempos]),
         "radar": None if not radar_info else {
             "ultimo_quadro": radar_info["ultimo_quadro"], "fator_vies": radar_info["fator_vies"],
+            "atraso_min": int((agora - dt.datetime.fromisoformat(radar_info["ultimo_quadro"])).total_seconds() // 60),
             "movimento": radar_info["movimento"], "taxa_atual_mm_h": radar_info["taxa_atual_mm_h"],
             "serie10": radar_info["serie10"], "previsao10": radar_info["previsao10"],
             "quadros": radar_info.get("quadros"), "legenda": radar_info.get("legenda")},

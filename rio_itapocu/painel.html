@@ -409,7 +409,7 @@ function render(){
   if(R){
     radarPlayer(R);
     const dir=['N','NE','L','SE','S','SO','O','NO'][Math.round(R.movimento.para_graus/45)%8];
-    $('radarKpis').innerHTML=[['Chuva agora (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,`quadro das ${R.ultimo_quadro.slice(11,16)}`],
+    $('radarKpis').innerHTML=[['Chuva agora (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,(R.atraso_min>20?`<b style="color:var(--al)">⚠ radar da Defesa Civil atrasado: último quadro às ${R.ultimo_quadro.slice(11,16)}</b>`:`quadro das ${R.ultimo_quadro.slice(11,16)}`)],
       ['Para onde a chuva vai',R.movimento.km_h>0?`${dir} <small>${fmt(R.movimento.km_h,0)} km/h</small>`:'<small>sem direção definida</small>',R.movimento.km_h>0?'movimento das nuvens de chuva':'chuva espalhada sobre a região']].map(cartao).join('');
   }
   // ----- fontes e método
