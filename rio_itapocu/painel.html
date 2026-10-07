@@ -152,6 +152,7 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
   <div class="aviso">Barras: chuva por hora na bacia. Linha verde: régua da Ponte Corupá. A seta mostra o atraso entre o pico da chuva e o pico do rio.</div></div></div>
  <div><h2>Radar: onde está chovendo agora</h2>
   <div class="card" style="text-align:center">
+  <div id="radarAviso" style="display:none;background:#FFF4E5;color:#7a4100;border:1px solid #F47B20;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13.5px;text-align:left"></div>
   <div id="radarTela" role="img" aria-label="radar meteorológico sobre a bacia"></div>
   <div class="rctl"><button id="rPlay" title="Pausar / tocar">⏸</button><button id="rAnt" title="Quadro anterior">◀</button>
    <input type="range" id="rPos" min="0" max="0" value="0" aria-label="escolher o horário do radar"><button id="rProx" title="Próximo quadro">▶</button>
@@ -473,6 +474,10 @@ function radarMostra(){const q=RP.q;if(!q)return;const t=$('radarTela');
 function radarTique(){if(!RP.q)return;RP.k=(RP.k+1)%RP.q.n;radarMostra();clearTimeout(RP.timer);
   if(RP.tocando)RP.timer=setTimeout(radarTique,RP.k===RP.q.n-1?1500:450);}
 function radarPlayer(R){const q=R.quadros;if(!q)return;
+  const fora=R.valido===false||R.atraso_min>40, av=$('radarAviso');
+  av.style.display=fora?'block':'none';
+  if(fora)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). As imagens abaixo são as últimas disponíveis e <b>não entram na previsão</b> enquanto o radar não voltar. A chuva de agora vem do pluviômetro do CEMADEN em tempo real.`;
+  $('radarTela').style.opacity=fora?'.45':'1';
   const url='/radar_quadros.png?t='+encodeURIComponent(P.gerado_em);
   const t=$('radarTela');
   if(RP.url!==url){RP.url=url;t.style.backgroundImage=`url("${url}")`;}

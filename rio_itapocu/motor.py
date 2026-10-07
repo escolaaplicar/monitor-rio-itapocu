@@ -230,12 +230,19 @@ def rodar(registrar_previsao=True):
 
     # radar: chuva observada nos últimos quadros e previsão imediata (nowcasting) para 0-3 h
     radar_info = None
+    radar_valido = False
     try:
         import radar
         pluv = {t: v for t, v in zip(tempos, chuva_obs) if v is not None}
         radar_info = radar.processar(horas=6, horas_prev=3, chuva_pluvio=pluv)
         fontes_ok["Radar Defesa Civil SC (mosaico C-MAX)"] = {"ok": True, "ultima": radar_info["ultimo_quadro"]}
-        peso_radar = cfg["chuva"].get("peso_radar_horas", [1.0, 0.7, 0.4])
+        atraso_radar = (agora - dt.datetime.fromisoformat(radar_info["ultimo_quadro"])).total_seconds() / 60
+        radar_valido = atraso_radar <= cfg["chuva"].get("radar_atraso_max_min", 40)
+        if not radar_valido:  # imagens velhas não podem ser tratadas como chuva de agora
+            fontes_ok["Radar Defesa Civil SC (mosaico C-MAX)"] = {
+                "ok": False, "ultima": radar_info["ultimo_quadro"],
+                "erro": f"fora do ar na fonte desde {radar_info['ultimo_quadro'][11:16]}; fora do cálculo"}
+        peso_radar = cfg["chuva"].get("peso_radar_horas", [1.0, 0.7, 0.4]) if radar_valido else []
         for k, w in enumerate(peso_radar):
             t = h_atual + k * H
             rv = radar_info["previsao_horaria"].get(t)
@@ -255,7 +262,8 @@ def rodar(registrar_previsao=True):
     recentes = [chuva_obs[k] for k in range(max(0, i_agora - 3), i_agora) if chuva_obs[k] is not None]
     taxa_rec = sum(recentes) / len(recentes) if recentes else 0.0
     if radar_info:
-        taxa_rec = max(taxa_rec, radar_info.get("taxa_atual_mm_h") or 0.0)
+        if radar_valido:
+            taxa_rec = max(taxa_rec, radar_info.get("taxa_atual_mm_h") or 0.0)
     if chuva_tr:
         taxa_rec = max(taxa_rec, chuva_tr["mm_ultima_hora"])
     persistencia = {}
@@ -597,6 +605,7 @@ def rodar(registrar_previsao=True):
         "radar": None if not radar_info else {
             "ultimo_quadro": radar_info["ultimo_quadro"], "fator_vies": radar_info["fator_vies"],
             "atraso_min": int((agora - dt.datetime.fromisoformat(radar_info["ultimo_quadro"])).total_seconds() // 60),
+            "valido": radar_valido,
             "movimento": radar_info["movimento"], "taxa_atual_mm_h": radar_info["taxa_atual_mm_h"],
             "serie10": radar_info["serie10"], "previsao10": radar_info["previsao10"],
             "quadros": radar_info.get("quadros"), "legenda": radar_info.get("legenda")},
