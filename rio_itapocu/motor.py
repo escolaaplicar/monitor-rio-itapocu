@@ -430,6 +430,57 @@ def rodar(registrar_previsao=True):
             defasagem_obs = {"pico_chuva": _iso(t_pico_c), "pico_regua": _iso(t_pico_r),
                              "horas": round((t_pico_r - t_pico_c) / H, 1), "regua_pico_m": round(reg_hora[t_pico_r], 2)}
 
+    # ---------------------------------------------------------------- limiar de chuva que faz o rio subir
+    # Ajuste estatístico com o histórico: variação da régua nas 2 h seguintes (m/h)
+    #   = a·(chuva média das últimas 2 h) + b·(nível da régua) + c
+    # Equilíbrio (rio estável) quando a variação = 0  ->  chuva = -(b·nível + c)/a
+    # Subida forte (> 30 cm/h)                        ->  chuva = (0,30 - b·nível - c)/a
+    limiar = None
+    pts = []
+    for h in range(1, i_agora - 2):
+        if None in (chuva_obs[h], chuva_obs[h - 1], serie_regua[h], serie_regua[h + 1], serie_regua[h + 2]):
+            continue
+        pts.append(((chuva_obs[h] + chuva_obs[h - 1]) / 2, serie_regua[h], (serie_regua[h + 2] - serie_regua[h]) / 2))
+    reg_agora_l = None
+    if serie_regua[i_agora] is not None:
+        reg_agora_l = serie_regua[i_agora]
+    elif ancora:
+        reg_agora_l = ancora["regua_m"]
+    if len(pts) >= 12:
+        # mínimos quadrados (3 parâmetros)
+        X = [(r, hh, 1.0) for r, hh, _ in pts]
+        Y = [d for _, _, d in pts]
+        M = [[sum(x[p_] * x[q_] for x in X) for q_ in range(3)] + [sum(x[p_] * y for x, y in zip(X, Y))] for p_ in range(3)]
+        for col in range(3):
+            piv = max(range(col, 3), key=lambda r_: abs(M[r_][col]))
+            M[col], M[piv] = M[piv], M[col]
+            for r_ in range(3):
+                if r_ != col and M[col][col]:
+                    f_ = M[r_][col] / M[col][col]
+                    M[r_] = [u - f_ * v for u, v in zip(M[r_], M[col])]
+        if all(M[k][k] for k in range(3)):
+            ca, cb, cc_ = (M[k][3] / M[k][k] for k in range(3))
+            my = sum(Y) / len(Y)
+            ss = sum((y - my) ** 2 for y in Y) or 1e-9
+            r2 = 1 - sum((y - (ca * x[0] + cb * x[1] + cc_)) ** 2 for x, y in zip(X, Y)) / ss
+            if ca > 0.005:
+                def eq(nv):
+                    return max(0.0, -(cb * nv + cc_) / ca)
+
+                def forte(nv):
+                    return max(0.0, (0.30 - cb * nv - cc_) / ca)
+                nv = reg_agora_l if reg_agora_l is not None else 1.0
+                limiar = {"fonte": "ajuste", "n": len(pts), "r2": round(r2, 2),
+                          "coef": [round(ca, 4), round(cb, 4), round(cc_, 4)],
+                          "nivel": round(nv, 2), "equilibrio_mm_h": round(eq(nv), 1), "forte_mm_h": round(forte(nv), 1),
+                          "tabela": [{"nivel": x / 2, "eq": round(eq(x / 2), 1), "forte": round(forte(x / 2), 1)} for x in range(1, 11)]}
+    if limiar is None:  # pouco histórico: usa a estimativa inicial da config
+        li = cfg.get("limiar_chuva", {"equilibrio_mm_h": 6.0, "forte_mm_h": 10.0})
+        limiar = {"fonte": "estimativa inicial", "n": len(pts), "r2": None, "nivel": reg_agora_l,
+                  "equilibrio_mm_h": li["equilibrio_mm_h"], "forte_mm_h": li["forte_mm_h"], "tabela": []}
+    limiar["pontos"] = [[round(r, 2), round(hh, 2), round(100 * d, 1)] for r, hh, d in pts]
+    limiar["chuva_agora_mm_h"] = round(chuva_obs[i_agora], 1) if chuva_obs[i_agora] is not None else None
+
     # ---------------------------------------------------------------- recorte para o painel
     ini = max(0, i_agora - 7 * 24)
     sl = slice(ini, len(tempos))
@@ -539,6 +590,7 @@ def rodar(registrar_previsao=True):
         "chuva_prev_pessimista": r([prev_pess.get(t) for t in tempos]),
         "chuva_persistencia_mm_h": round(taxa_rec, 2),
         "chuva_tempo_real": chuva_tr,
+        "limiar_chuva": limiar,
         "chuva_radar": r([radar_info["horario"].get(t) if radar_info else None for t in tempos]),
         "chuva_radar_prev": r([radar_info["previsao_horaria"].get(t) if radar_info else None for t in tempos]),
         "radar": None if not radar_info else {

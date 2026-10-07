@@ -161,6 +161,17 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
   <div class="aviso" style="text-align:left;margin-top:8px">Radar da Defesa Civil SC (mosaico C-MAX). Contorno preto: bacia do Rio Novo e do Rio Humboldt. Cor convertida em chuva pela relação de Marshall-Palmer (Z = 200·R<sup>1,6</sup>) e ajustada aos pluviômetros. Nas próximas 3 h, o radar pesa 100%, 70% e 40% na chuva usada na previsão.</div></div></div>
 </div>
 
+<h2>Quanta chuva faz o rio subir</h2>
+<div class="two">
+ <div class="card">
+  <div id="limTexto" style="font-size:14.5px;line-height:1.55"></div>
+  <div class="grid" id="limKpis" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px"></div>
+  <div id="limTabela" class="aviso" style="margin-top:10px"></div>
+ </div>
+ <div class="card"><div class="ch s" style="height:280px"><canvas id="cLimiar"></canvas></div>
+  <div class="aviso">Cada ponto é uma hora do histórico: chuva média nas últimas 2 h (eixo horizontal) e quanto a régua subiu ou desceu nas 2 h seguintes (eixo vertical). A cor indica o nível do rio naquela hora. Linha pontilhada: limiar para o nível atual.</div></div>
+</div>
+
 <div class="two">
  <div><h2>Chuva na bacia</h2><div class="grid mini" id="kpisChuva"></div>
   <div class="card"><div class="ch s"><canvas id="cChuva"></canvas></div>
@@ -275,6 +286,8 @@ function render(){
   const reg=a=>a.map(v=>v==null?null:+(v+r0).toFixed(2));
   const eM=reg(P.elev_melhor), eP=reg(P.elev_prev), eMin=reg(P.elev_prev_min), eMax=reg(P.elev_prev_max);
   const a=P.alerta;
+  const LIM=P.limiar_chuva;
+  const limLinha=(n)=>LIM?{type:'line',label:`Limiar de subida ≈ ${fmt(LIM.equilibrio_mm_h,1)} mm/h`,data:Array(n).fill(LIM.equilibrio_mm_h),borderColor:'#F43F2F',borderDash:[5,4],borderWidth:2,pointRadius:0,yAxisID:'y'}:null;
   // ----- primeira dobra: tarja + 4 números
   const pior=a.status||a.nivel_atual;
   $('tarja').className='tarja '+pior; $('tarjaTxt').textContent=ROT[pior];
@@ -366,13 +379,32 @@ function render(){
     {type:'line',label:'Radar',data:S(P.chuva_radar||[]),borderColor:'#F47B20',backgroundColor:'#F47B20',borderWidth:2,pointRadius:2,spanGaps:false},
     {type:'line',label:'Radar: previsão imediata',data:S(P.chuva_radar_prev||[]),borderColor:'#F47B20',borderDash:[4,4],borderWidth:2,pointRadius:0},
     {type:'line',label:'Acumulada',data:acumul,borderColor:'#8a959c',borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
-  ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'mm por hora',color:css('--mut')}},y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'mm acumulados',color:css('--mut')}}}},[agoraPlug]);
+  ].concat(LIM?[limLinha(lab.length)]:[])},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'mm por hora',color:css('--mut')}},y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'mm acumulados',color:css('--mut')}}}},[agoraPlug]);
   draw('cVazao','line',{labels:lab,datasets:[
     {label:'Pior',data:S(P.q_prev_max.map((v,k)=>k>=i?v:null)),borderColor:'rgba(244,63,47,.55)',backgroundColor:'rgba(28,109,208,.10)',fill:'+1',pointRadius:0,borderWidth:1},
     {label:'Otimista',data:S(P.q_prev_min.map((v,k)=>k>=i?v:null)),borderColor:'rgba(28,109,208,.35)',pointRadius:0,borderWidth:1},
     {label:'Estimada',data:S(P.q_melhor.map((v,k)=>k<=i?v:null)),borderColor:css('--regua'),borderWidth:3,pointRadius:0},
     {label:'Prevista',data:S(P.q_prev.map((v,k)=>k>=i?v:null)),borderColor:css('--azul'),borderDash:[7,5],borderWidth:3,pointRadius:0}
   ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'m³/s',color:css('--mut')}}}},[agoraPlug]);
+  // ----- limiar de chuva que faz o rio subir
+  if(LIM){
+    const ag=LIM.chuva_agora_mm_h, acima=ag!=null&&ag>=LIM.equilibrio_mm_h, forte=ag!=null&&ag>=LIM.forte_mm_h;
+    $('limTexto').innerHTML=`Com o rio em <b>${fmt(LIM.nivel,2)} m</b> na régua, ${LIM.fonte==='ajuste'?'o histórico mostra que':'a estimativa inicial é que'} chuva acima de <b>≈ ${fmt(LIM.equilibrio_mm_h,1)} mm/h</b> na bacia, por cerca de 2 horas, faz o rio subir. Acima de <b>≈ ${fmt(LIM.forte_mm_h,1)} mm/h</b>, ele sobe rápido (mais de 30 cm por hora). Quanto mais alto o rio já está, mais chuva é preciso para ele continuar subindo.`;
+    $('limKpis').innerHTML=[
+      ['Chuva agora',ag!=null?`${fmt(ag,1)} <small>mm/h</small>`:'—',ag==null?'':forte?'<span class="tend sobe">acima do limiar de subida rápida</span>':acima?'<span class="tend sobe">acima do limiar: o rio tende a subir</span>':'<span class="tend desce">abaixo do limiar</span>'],
+      ['Faz o rio subir',`${fmt(LIM.equilibrio_mm_h,1)} <small>mm/h</small>`,'com o nível atual'],
+      ['Subida rápida',`${fmt(LIM.forte_mm_h,1)} <small>mm/h</small>`,'mais de 30 cm/h']].map(cartao).join('');
+    $('limTabela').innerHTML=LIM.tabela&&LIM.tabela.length?'Limiar conforme o nível: '+LIM.tabela.filter((_,k)=>k%2===1).map(t=>`${fmt(t.nivel,1)} m → ${fmt(t.eq,1)} mm/h`).join(' · ')+`. Ajuste com ${LIM.n} horas de histórico (explica ${Math.round(LIM.r2*100)}% da variação); é refeito a cada atualização.`:`Ainda há pouco histórico (${LIM.n} h): valores iniciais, recalculados conforme os dados chegam.`;
+    const corN=v=>v>=al.alerta?'#F47B20':v>=al.atencao?'#F5B70A':'#20BC66';
+    draw('cLimiar','scatter',{datasets:[
+      {label:'Horas do histórico',data:LIM.pontos.map(([r,h,d])=>({x:r,y:d,n:h})),pointBackgroundColor:LIM.pontos.map(([r,h])=>corN(h)),pointRadius:5,borderColor:'rgba(0,0,0,.25)',borderWidth:1},
+      {type:'line',label:`Limiar com o rio em ${fmt(LIM.nivel,2)} m`,data:[{x:LIM.equilibrio_mm_h,y:Math.min(-30,...LIM.pontos.map(p=>p[2]))},{x:LIM.equilibrio_mm_h,y:Math.max(30,...LIM.pontos.map(p=>p[2]))}],borderColor:'#F43F2F',borderDash:[5,4],borderWidth:2,pointRadius:0},
+      {type:'line',label:'',data:[{x:0,y:0},{x:Math.max(16,...LIM.pontos.map(p=>p[0]))+1,y:0}],borderColor:css('--mut'),borderWidth:1,pointRadius:0}]},
+      {...base,interaction:{mode:'nearest',intersect:true},plugins:{...base.plugins,legend:{...base.plugins.legend,labels:{...base.plugins.legend.labels,filter:i=>i.text}},
+        tooltip:{callbacks:{label:c=>c.raw.n!=null?`chuva ${fmt(c.raw.x,1)} mm/h → régua ${c.raw.y>=0?'+':''}${fmt(c.raw.y,0)} cm/h (rio em ${fmt(c.raw.n,2)} m)`:''}}},
+       scales:{x:{type:'linear',min:0,title:{display:true,text:'chuva média nas últimas 2 h (mm/h)',color:css('--mut')},ticks:{color:css('--mut')},grid:{color:css('--bd')}},
+               y:{title:{display:true,text:'régua nas 2 h seguintes (cm/h)',color:css('--mut')},ticks:{color:css('--mut')},grid:{color:css('--bd')}}}});
+  }
   // ----- tempo de resposta: chuva (barras) x régua (linha), picos marcados
   const TR=P.tempo_resposta||{}, ob=TR.observado_hoje, pu=(TR.pulsos||{}).agora;
   {
@@ -389,7 +421,7 @@ function render(){
       g.fillText(fmt(ob.horas,0)+' h de atraso',(x1+x2)/2,yy+16);g.restore();}};
     draw('cResp','bar',{labels:lab2,datasets:[
       {label:'Chuva na bacia (mm/h)',data:chH,backgroundColor:css('--chuva'),borderRadius:3,yAxisID:'y'},
-      {type:'line',label:'Régua Ponte Corupá (m)',data:regH,borderColor:css('--regua'),borderWidth:3,pointRadius:0,yAxisID:'y2'}]},
+      {type:'line',label:'Régua Ponte Corupá (m)',data:regH,borderColor:css('--regua'),borderWidth:3,pointRadius:0,yAxisID:'y2'}].concat(LIM?[limLinha(lab2.length)]:[])},
       {...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'chuva (mm/h)',color:css('--mut')}},
         y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'régua (m)',color:css('--mut')}}}},[marca]);
     if(ob){

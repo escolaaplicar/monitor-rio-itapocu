@@ -122,5 +122,10 @@
     "quantil_pior_caso": 0.9,
     "janela_h": 72,
     "folga_min_m": 0.05
+  },
+  "limiar_chuva": {
+    "equilibrio_mm_h": 6.0,
+    "forte_mm_h": 10.0,
+    "fonte": "Estimativa inicial (observação local em 06/10/2026: acima de ~6 mm/h o rio sobe); substituída pelo ajuste com o histórico quando houver 12 h ou mais"
   }
 }
