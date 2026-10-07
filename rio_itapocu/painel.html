@@ -450,9 +450,12 @@ function render(){
   const R=P.radar;
   if(R){
     radarPlayer(R);
-    const dir=['N','NE','L','SE','S','SO','O','NO'][Math.round(R.movimento.para_graus/45)%8];
-    $('radarKpis').innerHTML=[['Chuva agora (radar)',`${fmt(R.taxa_atual_mm_h)} <small>mm/h</small>`,(R.atraso_min>20?`<b style="color:var(--al)">⚠ radar da Defesa Civil atrasado: último quadro às ${R.ultimo_quadro.slice(11,16)}</b>`:`quadro das ${R.ultimo_quadro.slice(11,16)}`)],
-      ['Para onde a chuva vai',R.movimento.km_h>0?`${dir} <small>${fmt(R.movimento.km_h,0)} km/h</small>`:'<small>sem direção definida</small>',R.movimento.km_h>0?'movimento das nuvens de chuva':'chuva espalhada sobre a região']].map(cartao).join('');
+    const RVk=R.rainviewer||{}, emRV=R.quadros&&R.quadros.fonte==='RainViewer';
+    const mov=emRV&&RVk.movimento?RVk.movimento:R.movimento;
+    const dir=['N','NE','L','SE','S','SO','O','NO'][Math.round(mov.para_graus/45)%8];
+    const taxa=emRV?(RVk.taxa_bacia_mm_h!=null?RVk.taxa_bacia_mm_h*(RVk.fator_visual||1):null):R.taxa_atual_mm_h;
+    $('radarKpis').innerHTML=[['Chuva agora '+(emRV?'(RainViewer, calibrado)':'(radar)'),`${fmt(taxa)} <small>mm/h</small>`,emRV?`quadro das ${(RVk.ultimo_quadro||'').slice(11,16)} · só visualização`:(R.atraso_min>20?`<b style="color:var(--al)">⚠ radar da Defesa Civil atrasado: último quadro às ${R.ultimo_quadro.slice(11,16)}</b>`:`quadro das ${R.ultimo_quadro.slice(11,16)}`)],
+      ['Para onde a chuva vai',mov.km_h>0?`${dir} <small>${fmt(mov.km_h,0)} km/h</small>`:'<small>sem direção definida</small>',mov.km_h>0?'movimento das nuvens de chuva'+(emRV?' (RainViewer)':''):'chuva espalhada sobre a região']].map(cartao).join('');
   }
   // ----- fontes e método
   $('tFontes').innerHTML='<tr><th>Fonte</th><th>Status</th><th>Último dado</th></tr>'+Object.entries(P.fontes).map(([n,f])=>`<tr><td>${n}</td><td>${f.ok?'✅ ok':'❌ '+(f.erro||'sem dados')}</td><td>${f.ultima?hh(f.ultima):(f.modelos||[]).join(', ')}</td></tr>`).join('');

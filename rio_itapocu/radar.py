@@ -314,7 +314,7 @@ def reserva_rainviewer(chuva_pluvio=None, mostrar=False):
     fator, horas_fator = rainviewer.fator_visual()
     qs, caixa = rainviewer.quadros(12, fator=fator)
     hor = {}
-    for t, _, mm in qs:
+    for t, _, mm, _c in qs:
         hor.setdefault(t.replace(minute=0, second=0, microsecond=0), []).append(rainviewer.media_bacia(mm))
     hor = {k: sum(v) / len(v) for k, v in hor.items() if len(v) >= 4}
     rainviewer.registrar_comparacao(hor, chuva_pluvio or {})
@@ -324,6 +324,25 @@ def reserva_rainviewer(chuva_pluvio=None, mostrar=False):
             "fator_visual": round(fator, 2), "horas_fator": horas_fator}
     if mostrar and qs:
         _, base = _desenhista()
-        frames = [base(img, f"RAINVIEWER (reserva)  {t:%d/%m %H:%M} (hora local)") for t, img, _ in qs]
-        info["quadros"] = _tira(frames, [f"{t:%H:%M}" for t, _, _ in qs], len(qs), "RainViewer")
+        frames = [base(img, f"RAINVIEWER (reserva)  {t:%d/%m %H:%M} (hora local)") for t, img, _, _c in qs]
+        rotulos = [f"{t:%H:%M}" for t, _, _, _c in qs]
+        # projeção de 1 h: mede para onde as manchas andam (quadros com 20 min de intervalo) e desloca a última imagem
+        vs = []
+        for k in range(max(0, len(qs) - 7), len(qs) - 2):
+            dx, dy = deslocamento(qs[k][3], qs[k + 2][3], 8)
+            if abs(dx) < 8 and abs(dy) < 8:
+                vs.append((dx / 2, dy / 2))
+        vx = sorted(v[0] for v in vs)[len(vs) // 2] if vs else 0.0
+        vy = sorted(v[1] for v in vs)[len(vs) // 2] if vs else 0.0
+        t_ult, img_ult = qs[-1][0], qs[-1][1]
+        modo = "deslocamento" if (vx or vy) else "persistência"
+        for p in range(1, 7):
+            img = Image.new("RGBA", img_ult.size, (0, 0, 0, 0))
+            img.paste(img_ult, (round(vx * p), round(vy * p)))
+            tp = t_ult + dt.timedelta(minutes=10 * p)
+            frames.append(base(img, f"RAINVIEWER: PROJEÇÃO ({modo})  {tp:%H:%M}", prev=True))
+            rotulos.append(f"{tp:%H:%M}")
+        info["movimento"] = {"km_h": round(math.hypot(vx * 1.26, vy * 1.40) * 6, 1),
+                             "para_graus": round((math.degrees(math.atan2(vx, -vy)) + 360) % 360)}
+        info["quadros"] = _tira(frames, rotulos, len(qs), "RainViewer")
     return info

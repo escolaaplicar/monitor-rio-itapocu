@@ -80,7 +80,7 @@ def _mm_para_dbz(mm):
 
 
 def quadros(n=12, fator=1.0):
-    """Últimos n quadros: [(t_local, imagem RGBA no recorte do painel, {(x,y): mm/h} na bacia)].
+    """Últimos n quadros: [(t_local, imagem RGBA, {(x,y): mm/h} na bacia, {(x,y): mm/h} no recorte todo)].
 
     `fator` só muda as cores da imagem (escala dos pluviômetros); os valores em mm/h devolvidos
     continuam brutos, para a comparação não se contaminar com o próprio ajuste."""
@@ -95,7 +95,7 @@ def quadros(n=12, fator=1.0):
         base = d["host"] + fr["path"]
         tiles = {}
         img = Image.new("RGBA", (caixa[2] - caixa[0], caixa[3] - caixa[1]), (0, 0, 0, 0))
-        mm = {}
+        mm, campo = {}, {}
         for y in range(caixa[1], caixa[3]):
             for x in range(caixa[0], caixa[2]):
                 lon = radar.EXT[0] + (x + 0.5) / radar.W * (radar.EXT[2] - radar.EXT[0])
@@ -111,10 +111,12 @@ def quadros(n=12, fator=1.0):
                     cor = _cor_para_classe(_mm_para_dbz(radar.dbz_para_mm(dbz) * fator) if fator != 1.0 else dbz)
                     if cor:
                         img.putpixel((x - caixa[0], y - caixa[1]), cor + (255,))
+                v_mm = radar.dbz_para_mm(dbz)
+                campo[(x, y)] = v_mm * fator  # campo inteiro (com fator), para medir o deslocamento
                 if (x, y) in mascara:
-                    mm[(x, y)] = radar.dbz_para_mm(dbz)
+                    mm[(x, y)] = v_mm
         t = dt.datetime.fromtimestamp(fr["time"], dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(hours=3)
-        saida.append((t, img, mm))
+        saida.append((t, img, mm, campo))
     return saida, caixa
 
 
