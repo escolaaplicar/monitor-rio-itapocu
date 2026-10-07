@@ -210,6 +210,15 @@ def processar(horas=6, horas_prev=3, chuva_pluvio=None):
     prev_hor = {k: fator * sum(v) / 6 for k, v in prev_hor.items()}  # mm acumulados em cada hora
 
     quadros = _gif(campos[-12:], (vx, vy), t_ult)
+    # reserva visual: RainViewer quando a Defesa Civil está parada há mais de 40 min (não entra no cálculo)
+    reserva = None
+    try:
+        parado = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - dt.timedelta(hours=3) - t_ult) > dt.timedelta(minutes=40)
+        reserva = reserva_rainviewer({k: v for k, v in (chuva_pluvio or {}).items()}, mostrar=parado)
+        if parado and reserva.get("quadros"):
+            quadros = reserva.pop("quadros")
+    except Exception as ex:  # noqa: BLE001
+        reserva = {"erro": str(ex)[:200]}
     # legenda: cada cor do radar convertida em mm/h (Marshall-Palmer) e ajustada aos pluviômetros
     legenda = [{"cor": "#%02x%02x%02x" % c, "dbz": d, "mm_h": round(dbz_para_mm(d) * fator, 1)}
                for c, d in sorted(COR_DBZ.items(), key=lambda x: x[1]) if dbz_para_mm(d) > 0]
@@ -225,12 +234,13 @@ def processar(horas=6, horas_prev=3, chuva_pluvio=None):
         "movimento": {"km_h": round(km_h, 1), "para_graus": round(direcao)},
         "taxa_atual_mm_h": round(serie10[-1][1] * fator, 1),
         "quadros": quadros,
+        "rainviewer": reserva,
         "legenda": legenda,
     }
 
 
-def _gif(campos, vel, t_ult):
-    """Animação: últimos quadros observados + 1 h de previsão, recortada sobre a bacia."""
+def _desenhista():
+    """Recorte do painel e função que desenha um quadro (bacia, cidades e rótulo)."""
     x0, y0 = px(REC[3], REC[0])
     x1, y1 = px(REC[1], REC[2])
     caixa = (int(x0), int(y0), int(x1) + 1, int(y1) + 1)
@@ -257,6 +267,14 @@ def _gif(campos, vel, t_ult):
         d.text((8, 5), rotulo, fill=(0, 0, 0), font=fonte_b)
         return im
 
+    return caixa, base
+
+
+def _gif(campos, vel, t_ult):
+    """Animação: últimos quadros observados + 1 h de previsão, recortada sobre a bacia."""
+    caixa, base = _desenhista()
+    fundo = (238, 241, 244)
+
     frames = []
     for t, _, cam in campos:
         img = Image.open(cam).convert("RGBA").crop(caixa)
@@ -277,4 +295,33 @@ def _gif(campos, vel, t_ult):
         tira.paste(f, (0, k * h))
     tira.quantize(colors=96, method=Image.Quantize.MEDIANCUT).save(QUADROS, optimize=True)
     rotulos = [f"{t:%H:%M}" for t, _, _ in campos] + [f"{t_ult + dt.timedelta(minutes=10 * p):%H:%M}" for p in (1, 2, 3, 4, 5, 6)]
-    return {"n": len(frames), "observados": len(campos), "rotulos": rotulos, "largura": w, "altura": h}
+    return {"n": len(frames), "observados": len(campos), "rotulos": rotulos, "largura": w, "altura": h, "fonte": "Defesa Civil SC"}
+
+
+def _tira(frames, rotulos, observados, fonte):
+    fundo = (238, 241, 244)
+    w, h = frames[0].size
+    tira = Image.new("RGB", (w, h * len(frames)), fundo)
+    for k, f in enumerate(frames):
+        tira.paste(f, (0, k * h))
+    tira.quantize(colors=96, method=Image.Quantize.MEDIANCUT).save(QUADROS, optimize=True)
+    return {"n": len(frames), "observados": observados, "rotulos": rotulos, "largura": w, "altura": h, "fonte": fonte}
+
+
+def reserva_rainviewer(chuva_pluvio=None, mostrar=False):
+    """Busca o RainViewer: grava a comparação com os pluviômetros e, se `mostrar`, troca os quadros da tela."""
+    import rainviewer
+    qs, caixa = rainviewer.quadros(12)
+    hor = {}
+    for t, _, mm in qs:
+        hor.setdefault(t.replace(minute=0, second=0, microsecond=0), []).append(rainviewer.media_bacia(mm))
+    hor = {k: sum(v) / len(v) for k, v in hor.items() if len(v) >= 4}
+    rainviewer.registrar_comparacao(hor, chuva_pluvio or {})
+    info = {"ultimo_quadro": qs[-1][0].strftime("%Y-%m-%dT%H:%M") if qs else None,
+            "taxa_bacia_mm_h": round(rainviewer.media_bacia(qs[-1][2]), 1) if qs else None,
+            "avaliacao": rainviewer.avaliar_comparacao()}
+    if mostrar and qs:
+        _, base = _desenhista()
+        frames = [base(img, f"RAINVIEWER (reserva)  {t:%d/%m %H:%M} (hora local)") for t, img, _ in qs]
+        info["quadros"] = _tira(frames, [f"{t:%H:%M}" for t, _, _ in qs], len(qs), "RainViewer")
+    return info

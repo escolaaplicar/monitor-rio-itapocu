@@ -54,7 +54,7 @@ jobs:
           mkdir -p /tmp/estado
           cp rio_itapocu/historico_reguas.csv /tmp/estado/ 2>/dev/null || true
           cp -r rio_itapocu/cache_ana /tmp/estado/ 2>/dev/null || true
-          cp rio_itapocu/previsoes_1h.csv rio_itapocu/calibracao_auto.json rio_itapocu/cache_previsao.json /tmp/estado/ 2>/dev/null || true
+          cp rio_itapocu/previsoes_1h.csv rio_itapocu/calibracao_auto.json rio_itapocu/cache_previsao.json rio_itapocu/rainviewer_vs_pluvio.csv /tmp/estado/ 2>/dev/null || true
           cd /tmp/estado
           git init -q -b estado
           git config user.name "github-actions[bot]"

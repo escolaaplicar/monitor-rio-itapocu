@@ -212,6 +212,8 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
 <tr><td><b>Radares meteorológicos de SC</b>: Defesa Civil de Santa Catarina e Epagri/CIRAM<br>Mosaico C-MAX (radares de Chapecó, Lontras e Araranguá)<br>
 <a href="https://ciram.epagri.sc.gov.br/index.php/radar/" target="_blank" rel="noopener">Radar CIRAM</a> · <a href="https://www.defesacivil.sc.gov.br/" target="_blank" rel="noopener">Defesa Civil SC</a></td>
 <td>Refletividade (dBZ) a cada 10 min</td><td>10 min</td><td>Chuva atual na bacia, animação e previsão imediata (0–3 h)</td></tr>
+<tr><td><b>RainViewer</b> (rede internacional de radares), reserva visual<br><a href="https://www.rainviewer.com/" target="_blank" rel="noopener">rainviewer.com</a> · <a href="https://www.rainviewer.com/api.html" target="_blank" rel="noopener">API pública</a></td>
+<td>Refletividade (esquema de cores “Universal Blue”, convertido em dBZ pela tabela oficial)</td><td>10 min</td><td>Só exibição, quando o radar da Defesa Civil está parado há mais de 40 min. Não entra no cálculo; é comparado com os pluviômetros a cada atualização</td></tr>
 </table>
 
 <h3>Previsão do tempo</h3>
@@ -476,8 +478,10 @@ function radarTique(){if(!RP.q)return;RP.k=(RP.k+1)%RP.q.n;radarMostra();clearTi
 function radarPlayer(R){const q=R.quadros;if(!q)return;
   const fora=R.valido===false||R.atraso_min>40, av=$('radarAviso');
   av.style.display=fora?'block':'none';
-  if(fora)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). As imagens abaixo são as últimas disponíveis e <b>não entram na previsão</b> enquanto o radar não voltar. A chuva de agora vem do pluviômetro do CEMADEN em tempo real.`;
-  $('radarTela').style.opacity=fora?'.45':'1';
+  const rv=q.fonte==='RainViewer', RV=R.rainviewer||{}, ava=RV.avaliacao||{};
+  if(fora&&rv)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). Mostrando o <b>RainViewer</b> (rede internacional de radares) como reserva, <b>só para visualização: não entra na previsão</b>. Cores convertidas para a mesma escala da legenda. Ele está sendo comparado com os pluviômetros${ava.horas?` (${ava.horas} h até agora${ava.razao_media!=null?`; marca em média ${fmt(ava.razao_media*100,0)}% da chuva medida`:''})`:''}.`;
+  else if(fora)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). As imagens abaixo são as últimas disponíveis e <b>não entram na previsão</b> enquanto o radar não voltar. A chuva de agora vem do pluviômetro do CEMADEN em tempo real.`;
+  $('radarTela').style.opacity=fora&&!rv?'.45':'1';
   const url='/radar_quadros.png?t='+encodeURIComponent(P.gerado_em);
   const t=$('radarTela');
   if(RP.url!==url){RP.url=url;t.style.backgroundImage=`url("${url}")`;}
@@ -485,7 +489,7 @@ function radarPlayer(R){const q=R.quadros;if(!q)return;
   const novo=!RP.q||RP.q.n!==q.n;RP.q=q;$('rPos').max=q.n-1;
   if(novo){RP.k=RP.tocando?0:q.observados-1;}
   radarMostra();if(RP.tocando&&!RP.timer)RP.timer=setTimeout(radarTique,450);
-  if(R.legenda)$('radarLeg').innerHTML='<b>Chuva estimada pelo radar (mm por hora)</b>'+R.legenda.map(l=>`<span><i style="background:${l.cor}"></i>${l.mm_h<10?fmt(l.mm_h,1):fmt(l.mm_h,0)}</span>`).join('');}
+  if(R.legenda)$('radarLeg').innerHTML='<b>Chuva estimada pelo radar (mm por hora)'+(rv?' · imagens: RainViewer':'')+'</b>'+R.legenda.map(l=>`<span><i style="background:${l.cor}"></i>${l.mm_h<10?fmt(l.mm_h,1):fmt(l.mm_h,0)}</span>`).join('');}
 $('rPlay').onclick=()=>{RP.tocando=!RP.tocando;$('rPlay').textContent=RP.tocando?'⏸':'▶';clearTimeout(RP.timer);RP.timer=null;if(RP.tocando)radarTique();};
 const rParar=()=>{RP.tocando=false;$('rPlay').textContent='▶';clearTimeout(RP.timer);RP.timer=null;};
 $('rAnt').onclick=()=>{if(!RP.q)return;rParar();RP.k=(RP.k-1+RP.q.n)%RP.q.n;radarMostra();};

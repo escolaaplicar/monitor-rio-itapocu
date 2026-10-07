@@ -12,6 +12,8 @@
 | **ANA, Hidrotelemetria**: 82336000 “PCH Rabo do Macaco Jusante” (Rio Humboldt); 82338000 “CGH Ano Bom Jusante” (Rio Ano Bom). [SNIRH Hidrotelemetria](https://www.snirh.gov.br/hidrotelemetria/) | Chuva, nível e vazão | ~30 min | Chuva do Humboldt (peso 0,30); vazão para calibrar e corrigir o modelo |
 | **Radares meteorológicos de SC**, Defesa Civil de SC e Epagri/CIRAM: mosaico C-MAX (Chapecó, Lontras, Araranguá). [Radar CIRAM](https://ciram.epagri.sc.gov.br/index.php/radar/) · [Defesa Civil SC](https://www.defesacivil.sc.gov.br/) | Refletividade (dBZ) | 10 min | Chuva atual, animação, previsão imediata (0–3 h) |
 
+| **RainViewer** (rede internacional de radares), reserva visual. [rainviewer.com](https://www.rainviewer.com/) · [API](https://www.rainviewer.com/api.html) | Refletividade (esquema “Universal Blue”, convertido em dBZ pela tabela oficial) | 10 min | Só exibição quando o radar da Defesa Civil está parado há mais de 40 min; não entra no cálculo; comparado com os pluviômetros |
+
 ## Previsão do tempo
 
 - **Open-Meteo** ([open-meteo.com](https://open-meteo.com/), licença [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), com os modelos **ECMWF IFS 0,25°** (Centro Europeu de Previsões Meteorológicas de Médio Prazo), **GFS** (NOAA/NCEP, EUA) e **ICON** (Serviço Meteorológico Alemão, DWD). Fornece a chuva prevista hora a hora em 4 pontos da bacia. Usada depois das 3 primeiras horas, corrigida pelo erro de cada modelo nas últimas 12 h, nos cenários otimista, médio e pessimista.

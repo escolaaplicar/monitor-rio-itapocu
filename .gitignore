@@ -32,3 +32,5 @@ rio_itapocu/calibracao_auto.json
 rio_itapocu/radar_quadros.png
 rio_itapocu/cache_previsao.json
 ROTINA_LOG.md
+rio_itapocu/cache_rainviewer_cores.json
+rio_itapocu/rainviewer_vs_pluvio.csv
