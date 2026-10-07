@@ -563,6 +563,15 @@ def rodar(registrar_previsao=True):
                 if obs is not None:
                     verif.append({"alvo": alvo, "obs": obs, "media": float(med), "pior": float(pio), "erro": obs - float(med)})
     pior_modelo_1h = reg_pior_1h
+    # na descida, a média de 1 h fica entre o modelo e a tendência da régua na última hora (sem passar da régua atual):
+    # o modelo baixa rápido demais; no histórico de 06–07/10 o erro médio caiu de 18,5 para 10,6 cm e a régua
+    # passou do pior caso menos vezes (16 → 13). Na subida nada muda.
+    if ult_leit and agora - ult_leit[0] <= dt.timedelta(minutes=20) and reg_media_1h < reg_atual:
+        reg_antes = regua_em(ult_leit[0] - H)
+        if reg_antes is not None:
+            tend = min(ult_leit[1] + (ult_leit[1] - reg_antes), reg_atual)
+            if tend > reg_media_1h:
+                reg_media_1h = 0.5 * reg_media_1h + 0.5 * tend
     fonte_pior = "pior cenário dos modelos de chuva"
     if len(verif) >= vcfg.get("min_verificacoes", 12):
         erros_v = sorted(v["erro"] for v in verif)
