@@ -60,8 +60,30 @@ def _cor_para_classe(dbz):
     return melhor
 
 
-def quadros(n=12):
-    """Últimos n quadros: [(t_local, imagem RGBA no recorte do painel, {(x,y): mm/h} na bacia)]."""
+def fator_visual(min_horas=2, faixa=(0.5, 10.0)):
+    """Fator que leva a chuva do RainViewer à escala dos pluviômetros (só para a imagem na tela)."""
+    pares = []
+    if os.path.exists(COMPARACAO):
+        with open(COMPARACAO, encoding="utf-8") as f:
+            for ln in f.read().splitlines()[1:]:
+                c = ln.split(",")
+                if len(c) == 3 and c[1] and c[2] and (float(c[1]) > 0.2 or float(c[2]) > 0.2):
+                    pares.append((float(c[1]), float(c[2])))
+    pares = pares[-48:]  # últimas 48 h com chuva
+    if len(pares) < min_horas or sum(a for a, _ in pares) <= 0:
+        return 1.0, len(pares)
+    return min(max(sum(b for _, b in pares) / sum(a for a, _ in pares), faixa[0]), faixa[1]), len(pares)
+
+
+def _mm_para_dbz(mm):
+    return 10 * math.log10(200 * mm ** 1.6) if mm > 0 else -99
+
+
+def quadros(n=12, fator=1.0):
+    """Últimos n quadros: [(t_local, imagem RGBA no recorte do painel, {(x,y): mm/h} na bacia)].
+
+    `fator` só muda as cores da imagem (escala dos pluviômetros); os valores em mm/h devolvidos
+    continuam brutos, para a comparação não se contaminar com o próprio ajuste."""
     cores = _cores()
     d = requests.get(MAPAS, headers=UA, timeout=20).json()
     x0, y0 = radar.px(radar.REC[3], radar.REC[0])
@@ -86,7 +108,7 @@ def quadros(n=12):
                 p = tiles[k].getpixel((min(255, int((fx - k[0]) * 256)), min(255, int((fy - k[1]) * 256))))
                 dbz = cores.get(p[:3]) if p[3] > 0 else None
                 if dbz is not None:
-                    cor = _cor_para_classe(dbz)
+                    cor = _cor_para_classe(_mm_para_dbz(radar.dbz_para_mm(dbz) * fator) if fator != 1.0 else dbz)
                     if cor:
                         img.putpixel((x - caixa[0], y - caixa[1]), cor + (255,))
                 if (x, y) in mascara:

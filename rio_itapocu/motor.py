@@ -214,8 +214,12 @@ def rodar(registrar_previsao=True):
             if i < i_agora and chuva_obs[i] is not None:
                 out.append(chuva_obs[i])
             elif i == i_agora and chuva_obs[i] is not None:
-                # hora corrente incompleta: usa o maior entre o observado até agora e a previsão
-                out.append(max(chuva_obs[i], fonte_prev.get(t, 0) * fp))
+                if chuva_tr and chuva_tr.get("hora") == _iso(t):
+                    # a hora corrente já foi medida em tempo real (últimos 60 min): vale a medição
+                    out.append(chuva_obs[i])
+                else:
+                    # hora corrente incompleta: usa o maior entre o observado até agora e a previsão
+                    out.append(max(chuva_obs[i], fonte_prev.get(t, 0) * fp))
             else:
                 out.append(fonte_prev.get(t, 0.0) * fp)
         return out

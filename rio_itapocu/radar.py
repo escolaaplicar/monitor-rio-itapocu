@@ -311,7 +311,8 @@ def _tira(frames, rotulos, observados, fonte):
 def reserva_rainviewer(chuva_pluvio=None, mostrar=False):
     """Busca o RainViewer: grava a comparação com os pluviômetros e, se `mostrar`, troca os quadros da tela."""
     import rainviewer
-    qs, caixa = rainviewer.quadros(12)
+    fator, horas_fator = rainviewer.fator_visual()
+    qs, caixa = rainviewer.quadros(12, fator=fator)
     hor = {}
     for t, _, mm in qs:
         hor.setdefault(t.replace(minute=0, second=0, microsecond=0), []).append(rainviewer.media_bacia(mm))
@@ -319,7 +320,8 @@ def reserva_rainviewer(chuva_pluvio=None, mostrar=False):
     rainviewer.registrar_comparacao(hor, chuva_pluvio or {})
     info = {"ultimo_quadro": qs[-1][0].strftime("%Y-%m-%dT%H:%M") if qs else None,
             "taxa_bacia_mm_h": round(rainviewer.media_bacia(qs[-1][2]), 1) if qs else None,
-            "avaliacao": rainviewer.avaliar_comparacao()}
+            "avaliacao": rainviewer.avaliar_comparacao(),
+            "fator_visual": round(fator, 2), "horas_fator": horas_fator}
     if mostrar and qs:
         _, base = _desenhista()
         frames = [base(img, f"RAINVIEWER (reserva)  {t:%d/%m %H:%M} (hora local)") for t, img, _ in qs]

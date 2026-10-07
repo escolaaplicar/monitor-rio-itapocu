@@ -479,7 +479,7 @@ function radarPlayer(R){const q=R.quadros;if(!q)return;
   const fora=R.valido===false||R.atraso_min>40, av=$('radarAviso');
   av.style.display=fora?'block':'none';
   const rv=q.fonte==='RainViewer', RV=R.rainviewer||{}, ava=RV.avaliacao||{};
-  if(fora&&rv)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). Mostrando o <b>RainViewer</b> (rede internacional de radares) como reserva, <b>só para visualização: não entra na previsão</b>. Cores convertidas para a mesma escala da legenda. Ele está sendo comparado com os pluviômetros${ava.horas?` (${ava.horas} h até agora${ava.razao_media!=null?`; marca em média ${fmt(ava.razao_media*100,0)}% da chuva medida`:''})`:''}.`;
+  if(fora&&rv)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). Mostrando o <b>RainViewer</b> (rede internacional de radares) como reserva, <b>só para visualização: não entra na previsão</b>. Cores convertidas para a mesma escala da legenda${RV.fator_visual&&RV.fator_visual!==1?` e <b>ajustadas ×${fmt(RV.fator_visual,1)}</b> pela comparação com os pluviômetros (${RV.horas_fator} h com chuva)`:''}. A comparação continua a cada atualização${ava.horas?` (${ava.horas} h até agora)`:''}.`;
   else if(fora)av.innerHTML=`<b>⚠ Radar da Defesa Civil de SC fora do ar desde ${R.ultimo_quadro.slice(11,16)}</b> (horário de Corupá). As imagens abaixo são as últimas disponíveis e <b>não entram na previsão</b> enquanto o radar não voltar. A chuva de agora vem do pluviômetro do CEMADEN em tempo real.`;
   $('radarTela').style.opacity=fora&&!rv?'.45':'1';
   const url='/radar_quadros.png?t='+encodeURIComponent(P.gerado_em);
