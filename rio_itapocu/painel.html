@@ -164,7 +164,7 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
 <div class="two">
  <div><h2>Chuva na bacia</h2><div class="grid mini" id="kpisChuva"></div>
   <div class="card"><div class="ch s"><canvas id="cChuva"></canvas></div>
-  <div class="aviso">Barras: chuva medida pelos pluviômetros (passado) e prevista (futuro). Linha laranja: radar, para conferência.</div></div></div>
+  <div class="aviso">Barras: chuva medida pelos pluviômetros (passado) e prevista (futuro). A barra da hora atual usa o pluviômetro do CEMADEN em tempo real (última 1 h), porque as séries horárias só fecham no fim da hora. Linha laranja: radar, para conferência.</div></div></div>
  <div><h2>Vazão do rio</h2><div class="grid mini" id="kpisVazao"></div>
   <div class="card"><div class="ch s"><canvas id="cVazao"></canvas></div>
   <div class="aviso">Vazão estimada a partir da régua (curva-chave) e prevista pelo modelo. Não há medição direta de vazão no ponto.</div></div></div>
@@ -355,10 +355,13 @@ function render(){
      scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{color:css('--mut'),maxTicksLimit:NT,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}},
              y:{...base.scales.y,title:{display:true,text:'régua (m)',color:css('--mut')}}}},[agoraT]);
   if(ultR) $('notaRegua').innerHTML=`Última leitura da régua: <b>${fmt(ultR.y,2)} m</b> às ${new Date(ultR.x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}, ou <b>${fmt(ultR.y-r0,2)} m acima do normal</b> (com o rio normal, a régua marca ${fmt(r0,2)} m).`;
-  const obsCh=S(P.chuva_modelo.map((v,k)=>k<i?v:null)), prevCh=S(P.chuva_modelo.map((v,k)=>k>=i?v:null));
+  const temTR=!!P.chuva_tempo_real;
+  const obsCh=S(P.chuva_modelo.map((v,k)=>k<i?v:null)), prevCh=S(P.chuva_modelo.map((v,k)=>k>i||(k===i&&!temTR)?v:null));
+  const parcCh=S(P.chuva_modelo.map((v,k)=>k===i&&temTR?v:null));
   let ac=0;const acumul=S(P.chuva_modelo).map(v=>(ac+=(v||0)));
   draw('cChuva','bar',{labels:lab,datasets:[
     {label:'Medida',data:obsCh,backgroundColor:css('--chuva'),borderRadius:3},
+    {label:'Medida agora (última 1 h, CEMADEN)',data:parcCh,backgroundColor:css('--chuva'),borderColor:css('--tx'),borderWidth:1.5,borderDash:[3,2],borderRadius:3},
     {label:'Prevista',data:prevCh,backgroundColor:'rgba(76,155,232,.35)',borderColor:css('--chuva'),borderWidth:1,borderRadius:3},
     {type:'line',label:'Radar',data:S(P.chuva_radar||[]),borderColor:'#F47B20',backgroundColor:'#F47B20',borderWidth:2,pointRadius:2,spanGaps:false},
     {type:'line',label:'Radar: previsão imediata',data:S(P.chuva_radar_prev||[]),borderColor:'#F47B20',borderDash:[4,4],borderWidth:2,pointRadius:0},

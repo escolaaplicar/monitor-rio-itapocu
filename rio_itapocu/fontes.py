@@ -60,6 +60,23 @@ def cemaden_horario(idestacao, horas=96):
     return serie, d.get("estacao", {})
 
 
+CEMADEN_TR = "https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=SC"
+
+
+def cemaden_tempo_real(idestacao):
+    """Acumulado da última 1 h (mm), atualizado a cada 10 min. Devolve (t_local, mm_1h) ou None."""
+    r = requests.get(CEMADEN_TR, headers=UA, timeout=30)
+    r.raise_for_status()
+    for e in r.json():
+        if e.get("idestacao") == idestacao:
+            v = e.get("acc1hr")
+            if v in (None, "-", ""):
+                return None
+            t = dt.datetime.strptime(e["datahoraUltimovalor"], "%d/%m/%y %H:%M") + TZ_OFFSET  # vem em UTC
+            return t, float(v)
+    return None
+
+
 # --------------------------------------------------------------------------- ANA
 ANA = ("https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos"
        "?codEstacao={c}&dataInicio={i:%d/%m/%Y}&dataFim={f:%d/%m/%Y}")

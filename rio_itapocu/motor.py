@@ -136,6 +136,19 @@ def rodar(registrar_previsao=True):
                 den += pesos[nome]
         chuva_obs.append(num / den if den else None)
 
+    # ----- hora corrente: CEMADEN em tempo real (as séries horárias só fecham a hora no fim dela)
+    chuva_tr = None
+    id_cem = next((e["id"] for e in cfg["chuva"]["estacoes"] if e["fonte"] == "cemaden"), None)
+    if id_cem:
+        try:
+            rt = fontes.cemaden_tempo_real(id_cem)
+            if rt and agora - rt[0] <= dt.timedelta(minutes=25):
+                chuva_tr = {"t": _iso(rt[0]), "mm_ultima_hora": rt[1]}
+                if chuva_obs[i_agora] is None or rt[1] > chuva_obs[i_agora]:
+                    chuva_obs[i_agora] = rt[1]  # taxa da última hora, usada como estimativa da hora atual
+        except Exception as ex:  # noqa: BLE001
+            erros.append(f"CEMADEN tempo real: {ex}")
+
     # ---------------------------------------------------------------- previsão
     fp = cfg["chuva"].get("fator_previsao", 1.0)
     cache_prev = os.path.join(AQUI, "cache_previsao.json")
@@ -232,6 +245,8 @@ def rodar(registrar_previsao=True):
     taxa_rec = sum(recentes) / len(recentes) if recentes else 0.0
     if radar_info:
         taxa_rec = max(taxa_rec, radar_info.get("taxa_atual_mm_h") or 0.0)
+    if chuva_tr:
+        taxa_rec = max(taxa_rec, chuva_tr["mm_ultima_hora"])
     persistencia = {}
     for k in range(0, 12):
         t = h_atual + k * H
@@ -513,6 +528,7 @@ def rodar(registrar_previsao=True):
         "chuva_prev_media": r([prev_media.get(t) for t in tempos]),
         "chuva_prev_pessimista": r([prev_pess.get(t) for t in tempos]),
         "chuva_persistencia_mm_h": round(taxa_rec, 2),
+        "chuva_tempo_real": chuva_tr,
         "chuva_radar": r([radar_info["horario"].get(t) if radar_info else None for t in tempos]),
         "chuva_radar_prev": r([radar_info["previsao_horaria"].get(t) if radar_info else None for t in tempos]),
         "radar": None if not radar_info else {
