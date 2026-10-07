@@ -569,6 +569,15 @@ def rodar(registrar_previsao=True):
         q = erros_v[min(len(erros_v) - 1, int(vcfg.get("quantil_pior_caso", 0.9) * len(erros_v)))]
         reg_pior_1h = reg_media_1h + max(q, vcfg.get("folga_min_m", 0.05))
         fonte_pior = f"previsão + erro observado em {len(verif)} previsões anteriores (90% dos casos)"
+    # piso do pior caso: a tendência da régua na última hora mantida por mais 1 h (na descida o modelo
+    # tende a baixar rápido demais; no histórico de 06–07/10 isto cortou pela metade as vezes em que a régua passou do pior caso)
+    if ult_leit and agora - ult_leit[0] <= dt.timedelta(minutes=20):
+        reg_1h_antes = regua_em(ult_leit[0] - H)
+        if reg_1h_antes is not None:
+            persist = ult_leit[1] + (ult_leit[1] - reg_1h_antes)
+            if persist > reg_pior_1h:
+                reg_pior_1h = persist
+                fonte_pior += "; mantida a tendência da régua na última hora"
     acerto = None
     if verif:
         acerto = {"n": len(verif), "erro_medio_cm": round(100 * sum(abs(v["erro"]) for v in verif) / len(verif), 1),
