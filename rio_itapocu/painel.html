@@ -134,7 +134,7 @@ footer{margin:28px 0 8px;font-size:12px;color:var(--mut);text-align:center}
 
 <div class="ctl">
   <label>Chuva acumulada nas últimas <select id="hAtras"><option>3</option><option>6</option><option selected>12</option><option>24</option><option>48</option><option>72</option><option>96</option><option>168</option></select> h</label>
-  <label>Previsão para as próximas <select id="hFrente"><option>3</option><option>6</option><option selected>12</option><option>24</option><option>48</option><option>72</option></select> h</label>
+  <label>Previsão para os próximos <select id="hFrente"><option value="3">3 h</option><option value="6">6 h</option><option value="12" selected>12 h</option><option value="24">24 h</option><option value="48">2 dias</option><option value="72">3 dias</option><option value="120">5 dias</option><option value="168">7 dias</option><option value="240">10 dias</option><option value="360">15 dias</option></select></label>
   <button class="sec" id="btnAtual">Atualizar agora</button>
   <button class="sec" id="btnSom">🔔 Ativar som e aviso do navegador</button>
 </div>
@@ -282,7 +282,8 @@ function acum(arr,i0,i1){let s=0;for(let i=Math.max(0,i0);i<Math.min(arr.length,
 const cartao=x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="d">${x[2]}</div></div>`;
 
 function render(){
-  const i=P.i_agora, fr=(+P.gerado_em.slice(14,16))/60, A=+$('hAtras').value, F=+$('hFrente').value, al=P.config.alertas, r0=al.regua_normal_m;
+  const i=P.i_agora, fr=(+P.gerado_em.slice(14,16))/60, A=+$('hAtras').value, F=Math.min(+$('hFrente').value,P.tempos.length-1-P.i_agora), al=P.config.alertas, r0=al.regua_normal_m;
+  const fF=F>=48?fmt(F/24,0)+' dias':F+' h', baixaConf=F>72;
   const reg=a=>a.map(v=>v==null?null:+(v+r0).toFixed(2));
   const eM=reg(P.elev_melhor), eP=reg(P.elev_prev), eMin=reg(P.elev_prev_min), eMax=reg(P.elev_prev_max);
   const a=P.alerta;
@@ -327,21 +328,24 @@ function render(){
   $('kpisNivel').innerHTML=[
    ['Nível atual na régua · '+P.gerado_em.slice(11,16),`${fmt(nivelAgora,2)} <small>m</small>`,`${fmt(nivelAgora-r0,2)} m acima do normal · ${tTxt(tendA)}`],
    ['Nível '+A+' h atrás (antes da chuva)',`${fmt(eM[i-A],2)} <small>m</small>`,`variação: ${(nivelAgora-eM[i-A]>=0?'+':'')}${fmt(nivelAgora-eM[i-A],2)} m`],
-   ['Nível previsto em '+F+' h',`${fmt(eP[i+F],2)} <small>m</small>`,`faixa ${fmt(eMin[i+F],2)}–${fmt(eMax[i+F],2)} m · pico ${fmt(eP[picoF],2)} m às ${hh(P.tempos[picoF])}<br>próxima hora: ${tTxt(tendF)}`]
+   ['Nível previsto em '+fF+(baixaConf?' (confiança baixa)':''),`${fmt(eP[i+F],2)} <small>m</small>`,`faixa ${fmt(eMin[i+F],2)}–${fmt(eMax[i+F],2)} m · pico ${fmt(eP[picoF],2)} m às ${hh(P.tempos[picoF])}<br>próxima hora: ${tTxt(tendF)}`]
   ].map(cartao).join('');
   $('kpisChuva').innerHTML=[
    ['Últimas '+A+' h',`${fmt(chA)} <small>mm</small>`,est],
-   ['Próximas '+F+' h',`${fmt(chF)} <small>mm</small>`,`pior caso ${fmt(chFP)} mm`]
+   ['Próximos '+fF,`${fmt(chF)} <small>mm</small>`,`pior caso ${fmt(chFP)} mm`]
   ].map(cartao).join('');
   $('kpisVazao').innerHTML=[
    ['Vazão agora',`${fmt(qAgora,0)} <small>m³/s</small>`,`normal ≈ ${fmt(P.config.canal.vazao_normal_m3s,0)} m³/s`],
-   ['Pico previsto em '+F+' h',`${fmt(P.q_prev[picoQ],0)} <small>m³/s</small>`,`às ${hh(P.tempos[picoQ])} · faixa ${fmt(P.q_prev_min[picoQ],0)}–${fmt(P.q_prev_max[picoQ],0)}`]
+   ['Pico previsto em '+fF,`${fmt(P.q_prev[picoQ],0)} <small>m³/s</small>`,`às ${hh(P.tempos[picoQ])} · faixa ${fmt(P.q_prev_min[picoQ],0)}–${fmt(P.q_prev_max[picoQ],0)}`]
   ].map(cartao).join('');
   // ----- gráficos
   const ini=Math.max(0,i-Math.max(A,24)), fim=Math.min(P.tempos.length,i+Math.max(F,12)+1);
   const lab=P.tempos.slice(ini,fim).map(hh), S=a=>a.slice(ini,fim);
   const agoraPlug={id:'agora',afterDraw(c){const x=c.scales.x.getPixelForValue(i-ini+fr);const y=c.chartArea;const g=c.ctx;g.save();g.strokeStyle=css('--mut');g.setLineDash([2,3]);g.beginPath();g.moveTo(x,y.top);g.lineTo(x,y.bottom);g.stroke();g.fillStyle=css('--mut');g.font='600 11px Montserrat, system-ui';g.fillText('agora',x+4,y.top+12);g.restore();}};
   const CEL=window.matchMedia&&matchMedia('(max-width:600px)').matches, NT=CEL?6:12;
+  const confPlug=(xDe)=>({id:'conf',beforeDatasetsDraw(c){const x0=xDe(c);if(x0==null||isNaN(x0))return;const y=c.chartArea;if(x0>=y.right)return;const g=c.ctx;g.save();
+    g.fillStyle='rgba(115,115,115,.08)';g.fillRect(Math.max(x0,y.left),y.top,y.right-Math.max(x0,y.left),y.bottom-y.top);
+    g.fillStyle=css('--mut');g.font='600 11px Montserrat, system-ui';g.fillText('previsão de chuva com confiança baixa (mais de 3 dias)',Math.max(x0,y.left)+6,y.bottom-8);g.restore();}});
   const base={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{position:CEL?'bottom':'top',labels:{color:css('--tx'),boxWidth:CEL?10:14,padding:CEL?6:10,font:{size:CEL?10:11}}}},
     scales:{x:{ticks:{color:css('--mut'),maxTicksLimit:NT,maxRotation:0,font:{size:10}},grid:{color:css('--bd')}},y:{ticks:{color:css('--mut'),font:{size:CEL?10:12}},grid:{color:css('--bd')}}}};
@@ -366,7 +370,7 @@ function render(){
      plugins:{...base.plugins,legend:{...base.plugins.legend,labels:{...base.plugins.legend.labels,filter:it=>it.text!=='Leituras manuais'||leitX.length}},
        tooltip:{callbacks:{title:it=>it.length?fmtT(it[0].parsed.x)+':'+String(new Date(it[0].parsed.x).getMinutes()).padStart(2,'0'):''}}},
      scales:{x:{type:'linear',min:xmin,max:xmax,ticks:{color:css('--mut'),maxTicksLimit:NT,callback:fmtT,font:{size:10}},grid:{color:css('--bd')}},
-             y:{...base.scales.y,title:{display:true,text:'régua (m)',color:css('--mut')}}}},[agoraT]);
+             y:{...base.scales.y,title:{display:true,text:'régua (m)',color:css('--mut')}}}},[agoraT,confPlug(c=>i+72<P.tempos.length?c.scales.x.getPixelForValue(tx(i+72)):null)]);
   if(ultR) $('notaRegua').innerHTML=`Última leitura da régua: <b>${fmt(ultR.y,2)} m</b> às ${new Date(ultR.x).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}, ou <b>${fmt(ultR.y-r0,2)} m acima do normal</b> (com o rio normal, a régua marca ${fmt(r0,2)} m).`;
   const temTR=!!P.chuva_tempo_real;
   const obsCh=S(P.chuva_modelo.map((v,k)=>k<i?v:null)), prevCh=S(P.chuva_modelo.map((v,k)=>k>i||(k===i&&!temTR)?v:null));
@@ -379,13 +383,13 @@ function render(){
     {type:'line',label:'Radar',data:S(P.chuva_radar||[]),borderColor:'#F47B20',backgroundColor:'#F47B20',borderWidth:2,pointRadius:2,spanGaps:false},
     {type:'line',label:'Radar: previsão imediata',data:S(P.chuva_radar_prev||[]),borderColor:'#F47B20',borderDash:[4,4],borderWidth:2,pointRadius:0},
     {type:'line',label:'Acumulada',data:acumul,borderColor:'#8a959c',borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
-  ].concat(LIM?[limLinha(lab.length)]:[])},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'mm por hora',color:css('--mut')}},y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'mm acumulados',color:css('--mut')}}}},[agoraPlug]);
+  ].concat(LIM?[limLinha(lab.length)]:[])},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'mm por hora',color:css('--mut')}},y2:{position:'right',min:0,ticks:{color:css('--mut')},grid:{display:false},title:{display:true,text:'mm acumulados',color:css('--mut')}}}},[agoraPlug,confPlug(c=>i+72<fim?c.scales.x.getPixelForValue(i+72-ini):null)]);
   draw('cVazao','line',{labels:lab,datasets:[
     {label:'Pior',data:S(P.q_prev_max.map((v,k)=>k>=i?v:null)),borderColor:'rgba(244,63,47,.55)',backgroundColor:'rgba(28,109,208,.10)',fill:'+1',pointRadius:0,borderWidth:1},
     {label:'Otimista',data:S(P.q_prev_min.map((v,k)=>k>=i?v:null)),borderColor:'rgba(28,109,208,.35)',pointRadius:0,borderWidth:1},
     {label:'Estimada',data:S(P.q_melhor.map((v,k)=>k<=i?v:null)),borderColor:css('--regua'),borderWidth:3,pointRadius:0},
     {label:'Prevista',data:S(P.q_prev.map((v,k)=>k>=i?v:null)),borderColor:css('--azul'),borderDash:[7,5],borderWidth:3,pointRadius:0}
-  ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'m³/s',color:css('--mut')}}}},[agoraPlug]);
+  ]},{...base,scales:{...base.scales,y:{...base.scales.y,min:0,title:{display:true,text:'m³/s',color:css('--mut')}}}},[agoraPlug,confPlug(c=>i+72<fim?c.scales.x.getPixelForValue(i+72-ini):null)]);
   // ----- limiar de chuva que faz o rio subir
   if(LIM){
     const ag=LIM.chuva_agora_mm_h, acima=ag!=null&&ag>=LIM.equilibrio_mm_h, forte=ag!=null&&ag>=LIM.forte_mm_h;

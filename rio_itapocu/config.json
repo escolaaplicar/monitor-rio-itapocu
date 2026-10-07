@@ -65,7 +65,9 @@
     "corrigir_vies_previsao": true,
     "horas_vies_previsao": 12,
     "tau_vies_previsao_h": 18,
-    "fator_pessimista": 1.0
+    "fator_pessimista": 1.0,
+    "dias_previsao": 16,
+    "_dias_previsao": "Open-Meteo: ECMWF até 15 dias, GFS 16, ICON ~7,5. Depois de 3 dias a previsão de chuva tem confiança baixa."
   },
   "hbv": {
     "fc": 265.20025,

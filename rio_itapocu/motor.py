@@ -83,7 +83,7 @@ def rodar(registrar_previsao=True):
     h_atual = fontes.hora_cheia(agora)
     dias = cfg["hbv"]["dias_aquecimento"]
     t0 = h_atual - dt.timedelta(days=dias)
-    horas_fut = 96
+    horas_fut = 24 * cfg["chuva"].get("dias_previsao", 16)
     tempos = [t0 + i * H for i in range(int((h_atual - t0) / H) + horas_fut)]
     i_agora = tempos.index(h_atual)
     erros, fontes_ok = [], {}
@@ -165,7 +165,8 @@ def rodar(registrar_previsao=True):
     prev, erro_prev = {}, None
     for tentativa in range(2):
         try:
-            prev = fontes.openmeteo_previsao(cfg["chuva"]["pontos_previsao"], cfg["chuva"]["modelos_previsao"])
+            prev = fontes.openmeteo_previsao(cfg["chuva"]["pontos_previsao"], cfg["chuva"]["modelos_previsao"],
+                                               dias=cfg["chuva"].get("dias_previsao", 16))
             break
         except Exception as ex:  # noqa: BLE001
             erro_prev = ex
