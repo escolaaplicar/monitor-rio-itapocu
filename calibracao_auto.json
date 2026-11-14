@@ -1,0 +1,33 @@
+{
+ "aceita": true,
+ "hbv": {
+  "fc": 400,
+  "beta": 0.5,
+  "lp": 0.26652,
+  "pet_mm_dia": 3.0,
+  "k0": 0.8269,
+  "k1": 0.01259,
+  "k2": 0.01408,
+  "uzl": 6.35731,
+  "perc": 0.92495,
+  "sm_ini": 1.0,
+  "lz_ini": 53.25244,
+  "nash_n": 3,
+  "nash_k": 1.41133,
+  "dias_aquecimento": 14
+ },
+ "curva": {
+  "K": 32.1569,
+  "H0": -0.4683,
+  "n": 1.4238
+ },
+ "resumo": {
+  "quando": "2026-11-14T16:27",
+  "horas_regua": 169,
+  "erro_atual_cm": 14.6,
+  "erro_novo_cm": 13.3,
+  "aceita": false,
+  "mantida_desde": "2026-11-14T09:02"
+ },
+ "descricao": "Recalibrado automaticamente em 2026-11-14T09:02 com 169 h de régua da Ponte Corupá; erro médio na régua 15.1 cm (antes 34.3 cm)."
+}
