@@ -138,10 +138,14 @@ def registrar_comparacao(horario_rv, chuva_pluvio):
         p = chuva_pluvio.get(t)
         antigo = linhas.get(k)
         linhas[k] = [k, f"{v:.2f}", f"{p:.2f}" if p is not None else (antigo[2] if antigo else "")]
-    with open(COMPARACAO, "w", encoding="utf-8") as f:
+    # grava num temporário e troca de uma vez: uma leitura simultânea ou um reinício
+    # no meio da escrita não deixa o arquivo pela metade (e o histórico perdido)
+    tmp = COMPARACAO + f".{os.getpid()}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         f.write("hora,rainviewer_mm_h,pluviometros_mm_h\n")
         for k in sorted(linhas):
             f.write(",".join(linhas[k]) + "\n")
+    os.replace(tmp, COMPARACAO)
 
 
 def avaliar_comparacao(min_horas=24):
